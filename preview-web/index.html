@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Alarm Preview</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy-block">
+        <p class="eyebrow">Preview Prototype</p>
+        <h1>Custom Alarm with routine groups</h1>
+        <p class="hero-copy">
+          Review the main product experience before Android polish: standard
+          alarms, routine groups, group-level master switches, and alarms inside
+          each routine.
+        </p>
+      </div>
+      <div class="hero-stats" id="heroStats"></div>
+    </header>
+
+    <main class="workspace">
+      <section class="phone-frame">
+        <div class="phone-screen">
+          <div class="screen-header">
+            <div>
+              <p class="screen-label">Dashboard</p>
+              <h2>Custom Alarm</h2>
+            </div>
+            <div class="screen-actions">
+              <button class="ghost-button" id="openSettingsButton">Permissions</button>
+              <button class="ghost-button" id="resetDemoButton">Reset</button>
+            </div>
+          </div>
+
+          <section class="overview-card" id="overviewCard"></section>
+          <div class="permission-strip" id="permissionStrip"></div>
+
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Standard</p>
+              <h3>Standard alarms</h3>
+            </div>
+            <button class="pill-button" id="addNormalAlarmButton">+ Add alarm</button>
+          </div>
+          <div id="normalAlarmList" class="card-list"></div>
+
+          <div class="section-head section-head-spaced">
+            <div>
+              <p class="section-kicker">Routine</p>
+              <h3>Routine groups</h3>
+            </div>
+            <button class="pill-button accent" id="addRoutineButton">+ New routine</button>
+          </div>
+          <div id="routineGroupList" class="card-list"></div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="side-block">
+          <div class="side-top">
+            <div>
+              <p class="panel-tag">Upcoming</p>
+              <h3>Unified timeline</h3>
+            </div>
+            <button class="ghost-button" id="exportStateButton">Export JSON</button>
+          </div>
+          <div id="timelineList" class="timeline-list"></div>
+        </section>
+
+        <section class="side-block">
+          <div class="panel-empty" id="detailEmpty">
+            <p class="panel-tag">Routine Detail</p>
+            <h3>Select a routine group</h3>
+            <p>The detail panel shows the group switch and all alarms inside it.</p>
+          </div>
+
+          <div class="panel-detail hidden" id="detailContent">
+            <div class="detail-top">
+              <div>
+                <p class="panel-tag">Routine Group</p>
+                <h3 id="detailTitle"></h3>
+                <p id="detailSummary"></p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="detailGroupToggle" />
+                <span class="switch-track"></span>
+              </label>
+            </div>
+            <div class="detail-actions">
+              <button class="pill-button" id="editRoutineButton">Edit routine</button>
+              <button class="pill-button accent" id="addRoutineAlarmButton">+ Add group alarm</button>
+            </div>
+            <div id="detailAlarmList" class="card-list"></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="editorModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="panel-tag" id="editorTag">Editor</p>
+          <h3 id="editorTitle">Add item</h3>
+        </div>
+        <button class="ghost-button" id="closeEditorButton">Close</button>
+      </div>
+
+      <form id="editorForm" class="editor-form">
+        <div class="form-grid" id="timeFields">
+          <label><span>Hour</span><input type="number" id="hourInput" min="0" max="23" /></label>
+          <label><span>Minute</span><input type="number" id="minuteInput" min="0" max="59" /></label>
+        </div>
+
+        <label>
+          <span id="labelFieldTitle">Label</span>
+          <input type="text" id="labelInput" placeholder="Morning study" />
+        </label>
+
+        <label id="routineGroupField" class="hidden">
+          <span>Routine group</span>
+          <select id="routineGroupSelect"></select>
+        </label>
+
+        <div id="weekdayBlock">
+          <span class="input-label">Repeat days</span>
+          <div class="weekday-grid" id="weekdayGrid"></div>
+        </div>
+
+        <div class="form-grid toggles" id="alarmToggleFields">
+          <label class="toggle-line"><span>Vibrate</span><input type="checkbox" id="vibrateInput" /></label>
+          <label class="toggle-line"><span>Snooze</span><input type="checkbox" id="snoozeEnabledInput" /></label>
+        </div>
+
+        <label id="snoozeField">
+          <span>Snooze minutes</span>
+          <input type="number" id="snoozeMinutesInput" min="1" max="30" value="10" />
+        </label>
+
+        <label class="toggle-line">
+          <span id="enabledFieldLabel">Enable after save</span>
+          <input type="checkbox" id="enabledInput" />
+        </label>
+
+        <p class="form-hint" id="editorHint"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="pill-button hidden" id="deleteButton">Delete</button>
+          <button type="submit" class="pill-button accent">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="settingsModal">
+    <div class="modal-card settings-card">
+      <div class="modal-head">
+        <div>
+          <p class="panel-tag">Permissions</p>
+          <h3>Alarm capability switches</h3>
+        </div>
+        <button class="ghost-button" id="closeSettingsButton">Close</button>
+      </div>
+      <div class="settings-list">
+        <div class="settings-item">
+          <div><strong>Exact alarm</strong><p>Simulates Android exact scheduling permission.</p></div>
+          <label class="switch"><input type="checkbox" id="exactPermissionToggle" /><span class="switch-track"></span></label>
+        </div>
+        <div class="settings-item">
+          <div><strong>Notification permission</strong><p>Simulates ringing notification availability.</p></div>
+          <label class="switch"><input type="checkbox" id="notificationPermissionToggle" /><span class="switch-track"></span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

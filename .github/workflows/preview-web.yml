@@ -1,0 +1,41 @@
+name: Preview Web
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "preview-web/**"
+      - ".github/workflows/preview-web.yml"
+
+jobs:
+  package-preview:
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Validate preview files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f preview-web/index.html
+          test -f preview-web/styles.css
+          test -f preview-web/app.js
+          grep -q '<script src="./app.js"></script>' preview-web/index.html
+
+      - name: Package static preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf dist/custom-alarm-preview-web.tar.gz preview-web
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-alarm-preview-web
+          path: dist/custom-alarm-preview-web.tar.gz
+          if-no-files-found: error
