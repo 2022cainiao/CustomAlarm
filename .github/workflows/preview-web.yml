@@ -8,9 +8,11 @@ on:
       - ".github/workflows/preview-web.yml"
 
 jobs:
-  package-preview:
+  deploy-preview:
     runs-on: self-hosted
     timeout-minutes: 10
+    env:
+      PREVIEW_WEB_PORT: "8091"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,18 +26,25 @@ jobs:
           test -f preview-web/index.html
           test -f preview-web/styles.css
           test -f preview-web/app.js
+          test -f deploy/deploy_preview_web.sh
           grep -q '<script src="./app.js"></script>' preview-web/index.html
 
-      - name: Package static preview
+      - name: Deploy static preview
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p dist
-          tar -czf dist/custom-alarm-preview-web.tar.gz preview-web
+          chmod +x deploy/deploy_preview_web.sh
+          ./deploy/deploy_preview_web.sh
 
-      - name: Upload preview artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: custom-alarm-preview-web
-          path: dist/custom-alarm-preview-web.tar.gz
-          if-no-files-found: error
+      - name: Verify preview service
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "http://127.0.0.1:${PREVIEW_WEB_PORT}/" >/dev/null
+          echo "Preview web is available on port ${PREVIEW_WEB_PORT}"
+
+      - name: Print preview url hint
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Preview web port: ${PREVIEW_WEB_PORT}"
