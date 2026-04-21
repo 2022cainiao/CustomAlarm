@@ -4,6 +4,7 @@ set -euo pipefail
 
 APP_NAME="custom_alarm_preview"
 PORT="${PREVIEW_WEB_PORT:-8091}"
+HOST="${PREVIEW_WEB_HOST:-127.0.0.1}"
 DEPLOY_ROOT="${PREVIEW_WEB_DEPLOY_ROOT:-$HOME/custom_alarm_preview}"
 PID_FILE="$DEPLOY_ROOT/server.pid"
 LOG_FILE="$DEPLOY_ROOT/server.log"
@@ -32,7 +33,7 @@ if command -v lsof >/dev/null 2>&1; then
 fi
 
 cd "$DEPLOY_ROOT/site"
-nohup python3 -m http.server "$PORT" --bind 0.0.0.0 >"$LOG_FILE" 2>&1 &
+nohup python3 -m http.server "$PORT" --bind "$HOST" >"$LOG_FILE" 2>&1 &
 NEW_PID="$!"
 echo "$NEW_PID" > "$PID_FILE"
 
@@ -46,5 +47,6 @@ fi
 
 echo "APP_NAME=$APP_NAME"
 echo "DEPLOY_ROOT=$DEPLOY_ROOT"
+echo "HOST=$HOST"
 echo "PORT=$PORT"
 echo "PID=$NEW_PID"
