@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.customalarm.app.domain.HolidayCalendarRemoteSource
 import com.customalarm.app.data.db.AppDatabase
 import com.customalarm.app.data.repository.AlarmRepository
 import com.customalarm.app.data.repository.AppSettingsRepository
@@ -29,25 +28,17 @@ class AppContainer(context: Context) {
         .build()
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val appSettingsRepository = AppSettingsRepository(applicationContext)
     val holidayCalendarStore = HolidayCalendarStore(applicationContext)
-    private val holidayServerSource = BuildConfig.HOLIDAY_SYNC_URL
-        .takeIf { it.isNotBlank() }
-        ?.let { url ->
-            HolidayCalendarRemoteSource(
-                name = BuildConfig.HOLIDAY_SYNC_SOURCE_NAME.ifBlank { "Holiday server" },
-                url = url
-            )
-        }
     val holidayCalendarSyncRepository = HolidayCalendarSyncRepository(
         holidayCalendarStore = holidayCalendarStore,
-        remoteSources = listOfNotNull(holidayServerSource)
+        appSettingsRepository = appSettingsRepository
     )
     val nextTriggerCalculator = NextTriggerCalculator(
         holidayCalendarProvider = holidayCalendarStore::currentCalendar
     )
     val alarmRepository = AlarmRepository(database.alarmDao(), nextTriggerCalculator)
     val routineGroupRepository = RoutineGroupRepository(database.routineGroupDao())
-    val appSettingsRepository = AppSettingsRepository(applicationContext)
     val alarmScheduler = AlarmScheduler(applicationContext, alarmRepository)
     val alarmRingingController = AlarmRingingController(applicationContext)
     val alarmCoordinator = AlarmCoordinator(

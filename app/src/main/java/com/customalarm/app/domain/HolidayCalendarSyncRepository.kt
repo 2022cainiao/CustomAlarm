@@ -1,10 +1,13 @@
 package com.customalarm.app.domain
 
+import com.customalarm.app.data.repository.AppSettingsRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -38,10 +41,10 @@ data class HolidayCalendarRemoteSource(
 
 class HolidayCalendarSyncRepository(
     private val holidayCalendarStore: HolidayCalendarStore,
+    private val appSettingsRepository: AppSettingsRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val todayProvider: () -> LocalDate = { LocalDate.now() },
-    private val nowProvider: () -> Instant = { Instant.now() },
-    private val remoteSources: List<HolidayCalendarRemoteSource> = emptyList()
+    private val nowProvider: () -> Instant = { Instant.now() }
 ) {
     private val _status = MutableStateFlow(buildStatus())
     val status: StateFlow<HolidayCalendarSyncStatus> = _status.asStateFlow()
@@ -128,37 +131,41 @@ class HolidayCalendarSyncRepository(
     }
 
     private suspend fun fetchRemoteCalendar(): RemoteFetchResult = withContext(ioDispatcher) {
-        var lastError = "Holiday server endpoint is not configured."
-        for (source in remoteSources) {
-            val responseResult = runCatching { download(source.url) }
-            if (responseResult.isFailure) {
-                val throwable = responseResult.exceptionOrNull()
-                lastError = "${source.name}: ${throwable?.message.orEmpty().ifBlank { "request failed" }}"
-                continue
-            }
-            val parsedResult = runCatching { HolidayCalendar.fromJson(responseResult.getOrThrow()) }
-            if (parsedResult.isFailure) {
-                val throwable = parsedResult.exceptionOrNull()
-                lastError = "${source.name}: ${throwable?.message.orEmpty().ifBlank { "invalid JSON format" }}"
-                continue
-            }
-            return@withContext RemoteFetchResult.Success(
-                source = source,
-                calendar = parsedResult.getOrThrow()
+        val configuredUrl = appSettingsRepository.holidaySyncUrl.first()
+        if (configuredUrl.isBlank()) {
+            return@withContext RemoteFetchResult.Failure("Holiday server endpoint is not configured.")
+        }
+        val source = HolidayCalendarRemoteSource(
+            name = runCatching { URL(configuredUrl).host.ifBlank { "Holiday server" } }
+                .getOrDefault("Holiday server"),
+            url = configuredUrl
+        )
+        val responseResult = runCatching { download(source.url) }
+        if (responseResult.isFailure) {
+            val throwable = responseResult.exceptionOrNull()
+            return@withContext RemoteFetchResult.Failure(
+                "${source.name}: ${throwable?.message.orEmpty().ifBlank { "request failed" }}"
             )
         }
-        RemoteFetchResult.Failure(lastError)
+        val parsedResult = runCatching { HolidayCalendar.fromJson(responseResult.getOrThrow()) }
+        if (parsedResult.isFailure) {
+            val throwable = parsedResult.exceptionOrNull()
+            return@withContext RemoteFetchResult.Failure(
+                "${source.name}: ${throwable?.message.orEmpty().ifBlank { "invalid JSON format" }}"
+            )
+        }
+        RemoteFetchResult.Success(
+            source = source,
+            calendar = parsedResult.getOrThrow()
+        )
     }
 
     private fun buildStatus(isSyncing: Boolean = false): HolidayCalendarSyncStatus {
         val calendar = runCatching { holidayCalendarStore.currentCalendar() }
             .getOrElse { HolidayCalendar.empty() }
+        val configuredUrl = runBlocking { appSettingsRepository.holidaySyncUrl.first() }
         val expired = calendar.isExpired(todayProvider())
-        val warning = if (expired && lastSyncFailed) {
-            true
-        } else {
-            false
-        }
+        val warning = expired && (configuredUrl.isBlank() || lastSyncFailed)
         return HolidayCalendarSyncStatus(
             coverageEnd = calendar.latestCoveredDate(),
             sourceName = calendar.sourceName,

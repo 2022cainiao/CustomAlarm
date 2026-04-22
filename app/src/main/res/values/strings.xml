@@ -22,6 +22,7 @@
     <string name="action_disable_battery_optimization">Allow background alarms</string>
     <string name="action_change_language">Change language</string>
     <string name="action_sync_holiday_calendar">Refresh</string>
+    <string name="action_save_server_address">Save address</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_save_alarm">Save alarm</string>
     <string name="action_save_routine_group">Save routine group</string>
@@ -34,6 +35,7 @@
     <string name="label_holiday_calendar">Holiday calendar</string>
     <string name="label_holiday_coverage">Data covers through: %1$s</string>
     <string name="label_holiday_coverage_short">Coverage: %1$s</string>
+    <string name="label_holiday_server_address">Holiday server</string>
     <string name="label_holiday_source">Current source: %1$s</string>
     <string name="label_holiday_last_sync">Last sync: %1$s</string>
     <string name="label_holiday_sync_failed_using_local">Server sync failed. Using local data for now.</string>
@@ -43,6 +45,7 @@
     <string name="label_enabled">Enabled</string>
     <string name="label_disabled">Disabled</string>
     <string name="label_unknown">Unknown</string>
+    <string name="label_not_configured">Not configured</string>
     <string name="label_overview">Overview</string>
     <string name="label_next_active_alarm">Next active alarm: %1$s</string>
     <string name="label_all_alarms">All alarms</string>
@@ -100,6 +103,7 @@
     <string name="hint_routine_alarm_management">Select a routine group below to keep this alarm there or move it to another group.</string>
     <string name="hint_create_routine_group_first">Create a routine group first or switch this alarm back to Standard.</string>
     <string name="hint_holiday_aware_workdays">When enabled, this alarm follows the official workday calendar instead of a plain Monday-to-Friday loop.</string>
+    <string name="hint_holiday_server_address">Example: 159.75.186.179:8090/holiday.json</string>
     <string name="hint_battery_optimization">If your phone clears this app from recent tasks, system battery restrictions may stop alarms from ringing in the background.</string>
 
     <string name="status_saving">Saving...</string>

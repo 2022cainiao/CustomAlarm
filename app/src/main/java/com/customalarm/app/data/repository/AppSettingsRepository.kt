@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.remove
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.core.os.LocaleListCompat
@@ -31,6 +32,7 @@ enum class AppLanguage(val tag: String?) {
 class AppSettingsRepository(private val context: Context) {
     private val defaultSnoozeKey = intPreferencesKey("default_snooze_minutes")
     private val appLanguageKey = stringPreferencesKey("app_language")
+    private val holidaySyncUrlKey = stringPreferencesKey("holiday_sync_url")
 
     val defaultSnoozeMinutes: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[defaultSnoozeKey] ?: 10
@@ -38,6 +40,10 @@ class AppSettingsRepository(private val context: Context) {
 
     val appLanguage: Flow<AppLanguage> = context.dataStore.data.map { preferences ->
         AppLanguage.fromStoredTag(preferences[appLanguageKey])
+    }
+
+    val holidaySyncUrl: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[holidaySyncUrlKey].orEmpty()
     }
 
     suspend fun setDefaultSnoozeMinutes(minutes: Int) {
@@ -57,11 +63,37 @@ class AppSettingsRepository(private val context: Context) {
         applyAppLanguage(language)
     }
 
+    suspend fun setHolidaySyncUrl(url: String) {
+        val normalizedUrl = normalizeHolidaySyncUrl(url)
+        context.dataStore.edit { preferences ->
+            if (normalizedUrl.isBlank()) {
+                preferences.remove(holidaySyncUrlKey)
+            } else {
+                preferences[holidaySyncUrlKey] = normalizedUrl
+            }
+        }
+    }
+
     fun applySavedAppLanguageBlocking() {
         applyAppLanguage(runBlocking { appLanguage.first() })
     }
 
     companion object {
+        fun normalizeHolidaySyncUrl(raw: String): String {
+            val trimmed = raw.trim()
+            if (trimmed.isBlank()) {
+                return ""
+            }
+            return if (
+                trimmed.startsWith("http://", ignoreCase = true) ||
+                trimmed.startsWith("https://", ignoreCase = true)
+            ) {
+                trimmed
+            } else {
+                "http://$trimmed"
+            }
+        }
+
         fun applyAppLanguage(language: AppLanguage) {
             val locales = if (language == AppLanguage.SYSTEM) {
                 LocaleListCompat.getEmptyLocaleList()

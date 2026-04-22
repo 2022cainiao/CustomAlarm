@@ -56,6 +56,7 @@ data class HomeUiState(
     val routineGroups: List<RoutineGroupSummary> = emptyList(),
     val upcomingAlarms: List<UpcomingAlarmSummary> = emptyList(),
     val holidayCalendar: HolidayCalendarUiState = HolidayCalendarUiState(),
+    val holidayServerUrl: String = "",
     val appLanguage: AppLanguage = AppLanguage.SYSTEM,
     val totalAlarmCount: Int = 0,
     val enabledNormalCount: Int = 0,
@@ -108,14 +109,23 @@ class HomeViewModel(
         }
     }
 
-    fun syncHolidayCalendar() {
+    fun syncHolidayCalendar(serverUrl: String) {
         viewModelScope.launch {
+            appSettingsRepository.setHolidaySyncUrl(serverUrl)
+            holidayCalendarSyncRepository.refreshStatus()
             runCatching {
                 val result = holidayCalendarSyncRepository.syncNow()
                 if (result.succeeded && result.calendarChanged) {
                     coordinator.rebuildSchedules()
                 }
             }
+        }
+    }
+
+    fun saveHolidayServerUrl(url: String) {
+        viewModelScope.launch {
+            appSettingsRepository.setHolidaySyncUrl(url)
+            holidayCalendarSyncRepository.refreshStatus()
         }
     }
 
@@ -131,8 +141,9 @@ class HomeViewModel(
                 container.alarmRepository.observeNormalAlarms(),
                 container.routineGroupRepository.observeRoutineGroupsWithAlarms(),
                 container.holidayCalendarSyncRepository.status,
-                container.appSettingsRepository.appLanguage
-            ) { normalAlarms, routineGroups, holidayStatus, appLanguage ->
+                container.appSettingsRepository.appLanguage,
+                container.appSettingsRepository.holidaySyncUrl
+            ) { normalAlarms, routineGroups, holidayStatus, appLanguage, holidayServerUrl ->
                 val sortedNormalAlarms = normalAlarms.sortedWith(
                     compareBy<AlarmEntity> { it.nextTriggerAt ?: Long.MAX_VALUE }
                         .thenBy { it.id }
@@ -187,6 +198,7 @@ class HomeViewModel(
                     routineGroups = routineSummaries,
                     upcomingAlarms = upcomingAlarms,
                     holidayCalendar = holidayStatus.toUiState(),
+                    holidayServerUrl = holidayServerUrl,
                     appLanguage = appLanguage,
                     totalAlarmCount = sortedNormalAlarms.size + routineGroups.sumOf { it.alarms.size },
                     enabledNormalCount = sortedNormalAlarms.count { it.enabled },

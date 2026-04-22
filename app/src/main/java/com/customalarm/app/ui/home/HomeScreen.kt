@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -38,10 +39,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +75,7 @@ fun HomeScreen(
     onRequestExactAlarmPermission: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
     onRequestIgnoreBatteryOptimizations: () -> Unit,
-    onSyncHolidayCalendar: () -> Unit,
+    onSyncHolidayCalendar: (String) -> Unit,
     onAddNormalAlarm: () -> Unit,
     onAddRoutineGroup: () -> Unit,
     onEditAlarm: (Long, Long?) -> Unit,
@@ -81,6 +84,13 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     var moveAlarmId by remember { mutableStateOf<Long?>(null) }
     var languageMenuExpanded by remember { mutableStateOf(false) }
+    var holidayServerInput by rememberSaveable { mutableStateOf(uiState.holidayServerUrl) }
+
+    LaunchedEffect(uiState.holidayServerUrl) {
+        if (holidayServerInput != uiState.holidayServerUrl) {
+            holidayServerInput = uiState.holidayServerUrl
+        }
+    }
 
     if (moveAlarmId != null) {
         MoveToRoutineGroupDialog(
@@ -177,7 +187,10 @@ fun HomeScreen(
             item {
                 HolidayCalendarCard(
                     holidayCalendar = uiState.holidayCalendar,
-                    onSyncHolidayCalendar = onSyncHolidayCalendar
+                    serverUrl = holidayServerInput,
+                    onServerUrlChange = { holidayServerInput = it },
+                    onSaveServerUrl = { viewModel.saveHolidayServerUrl(holidayServerInput) },
+                    onSyncHolidayCalendar = { onSyncHolidayCalendar(holidayServerInput) }
                 )
             }
 
@@ -271,9 +284,13 @@ private fun LanguageMenuButton(
 @Composable
 private fun HolidayCalendarCard(
     holidayCalendar: HolidayCalendarUiState,
+    serverUrl: String,
+    onServerUrlChange: (String) -> Unit,
+    onSaveServerUrl: () -> Unit,
     onSyncHolidayCalendar: () -> Unit
 ) {
     val warningActive = holidayCalendar.shouldWarnSourceUnavailable
+    val serverConfigured = serverUrl.isNotBlank()
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -308,9 +325,26 @@ private fun HolidayCalendarCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            OutlinedTextField(
+                value = serverUrl,
+                onValueChange = onServerUrlChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(stringResource(R.string.label_holiday_server_address)) },
+                placeholder = { Text(stringResource(R.string.hint_holiday_server_address)) }
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                OutlinedButton(onClick = onSaveServerUrl) {
+                    Text(stringResource(R.string.action_save_server_address))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 TextButton(
                     onClick = onSyncHolidayCalendar,
-                    enabled = !holidayCalendar.isSyncing
+                    enabled = serverConfigured && !holidayCalendar.isSyncing
                 ) {
                     Text(
                         stringResource(
@@ -326,7 +360,13 @@ private fun HolidayCalendarCard(
             Text(
                 text = stringResource(
                     R.string.label_holiday_source,
-                    holidayCalendar.sourceName ?: stringResource(R.string.label_unknown)
+                    holidayCalendar.sourceName
+                        ?: holidayCalendar.sourceUrl
+                        ?: if (serverConfigured) {
+                            serverUrl
+                        } else {
+                            stringResource(R.string.label_not_configured)
+                        }
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -345,7 +385,7 @@ private fun HolidayCalendarCard(
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodySmall
                 )
-            } else if (!holidayCalendar.lastErrorMessage.isNullOrBlank() && holidayCalendar.isExpired.not()) {
+            } else if (serverConfigured && !holidayCalendar.lastErrorMessage.isNullOrBlank() && holidayCalendar.isExpired.not()) {
                 Text(
                     text = stringResource(R.string.label_holiday_sync_failed_using_local),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -128,7 +128,7 @@ private fun AlarmApp() {
                             )
                         }
                     },
-                    onSyncHolidayCalendar = { viewModel.syncHolidayCalendar() },
+                    onSyncHolidayCalendar = { serverUrl -> viewModel.syncHolidayCalendar(serverUrl) },
                     onAddNormalAlarm = { navController.navigate(NavRoutes.alarmEditor()) },
                     onAddRoutineGroup = { navController.navigate(NavRoutes.routineEditor()) },
                     onEditAlarm = { alarmId, groupId ->
