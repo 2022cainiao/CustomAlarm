@@ -54,10 +54,52 @@ function loadState() {
     if (!raw) return demoState();
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.alarms) || !Array.isArray(parsed.routineGroups)) return demoState();
-    return parsed;
+    return normalizeState(parsed);
   } catch {
     return demoState();
   }
+}
+
+function normalizeState(rawState) {
+  const fallback = demoState();
+  const permissions = {
+    exactAlarm: rawState?.permissions?.exactAlarm ?? fallback.permissions.exactAlarm,
+    notifications: rawState?.permissions?.notifications ?? fallback.permissions.notifications,
+  };
+
+  const routineGroups = rawState.routineGroups.map((routine) => ({
+    id: routine.id || uid(),
+    name: routine.name || "Untitled routine",
+    enabled: routine.enabled ?? true,
+  }));
+
+  const validRoutineIds = new Set(routineGroups.map((routine) => routine.id));
+  const alarms = rawState.alarms.map((alarm) => ({
+    id: alarm.id || uid(),
+    type: alarm.type === "routine" ? "routine" : "normal",
+    label: alarm.label || "",
+    hour: Number.isFinite(alarm.hour) ? alarm.hour : 7,
+    minute: Number.isFinite(alarm.minute) ? alarm.minute : 0,
+    repeatDays: Array.isArray(alarm.repeatDays) ? alarm.repeatDays : [],
+    vibrate: alarm.vibrate ?? true,
+    snoozeEnabled: alarm.snoozeEnabled ?? true,
+    snoozeMinutes: Number.isFinite(alarm.snoozeMinutes) ? alarm.snoozeMinutes : 10,
+    enabled: alarm.enabled ?? true,
+    routineGroupId: alarm.type === "routine" && validRoutineIds.has(alarm.routineGroupId)
+      ? alarm.routineGroupId
+      : null,
+  }));
+
+  const selectedRoutineId = validRoutineIds.has(rawState.selectedRoutineId)
+    ? rawState.selectedRoutineId
+    : routineGroups[0]?.id || null;
+
+  return {
+    permissions,
+    selectedRoutineId,
+    routineGroups,
+    alarms,
+  };
 }
 
 let state = loadState();
