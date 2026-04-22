@@ -1,0 +1,4 @@
+<resources>
+    <!-- Keep this locale file valid so Chinese resources can be expanded safely later. -->
+    <string name="app_name">&#x81EA;&#x5B9A;&#x4E49;&#x95F9;&#x949F;</string>
+</resources>

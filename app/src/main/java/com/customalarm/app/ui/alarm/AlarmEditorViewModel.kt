@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.customalarm.app.R
 import com.customalarm.app.AppContainer
 import com.customalarm.app.data.model.AlarmType
 import com.customalarm.app.data.model.RoutineGroupEntity
@@ -30,7 +31,7 @@ data class AlarmEditorUiState(
     val snoozeMinutes: String = "10",
     val enabled: Boolean = true,
     val availableGroups: List<RoutineGroupEntity> = emptyList(),
-    val errorMessage: String? = null,
+    val errorMessageRes: Int? = null,
     val saved: Boolean = false
 )
 
@@ -76,19 +77,19 @@ class AlarmEditorViewModel(
     }
 
     fun updateHour(value: String) {
-        uiState = uiState.copy(hour = value.filter(Char::isDigit).take(2), errorMessage = null)
+        uiState = uiState.copy(hour = value.filter(Char::isDigit).take(2), errorMessageRes = null)
     }
 
     fun updateMinute(value: String) {
-        uiState = uiState.copy(minute = value.filter(Char::isDigit).take(2), errorMessage = null)
+        uiState = uiState.copy(minute = value.filter(Char::isDigit).take(2), errorMessageRes = null)
     }
 
     fun updateLabel(value: String) {
-        uiState = uiState.copy(label = value, errorMessage = null)
+        uiState = uiState.copy(label = value, errorMessageRes = null)
     }
 
     fun updateSnoozeMinutes(value: String) {
-        uiState = uiState.copy(snoozeMinutes = value.filter(Char::isDigit).take(2), errorMessage = null)
+        uiState = uiState.copy(snoozeMinutes = value.filter(Char::isDigit).take(2), errorMessageRes = null)
     }
 
     fun updateType(type: AlarmType) {
@@ -99,19 +100,19 @@ class AlarmEditorViewModel(
             } else {
                 null
             },
-            errorMessage = null
+            errorMessageRes = null
         )
     }
 
     fun updateRoutineGroupId(groupId: Long?) {
-        uiState = uiState.copy(routineGroupId = groupId, errorMessage = null)
+        uiState = uiState.copy(routineGroupId = groupId, errorMessageRes = null)
     }
 
     fun toggleRepeatDay(day: Int) {
         val updated = uiState.repeatDays.toMutableSet().apply {
             if (contains(day)) remove(day) else add(day)
         }
-        uiState = uiState.copy(repeatDays = updated, errorMessage = null)
+        uiState = uiState.copy(repeatDays = updated, errorMessageRes = null)
     }
 
     fun updateVibrate(enabled: Boolean) {
@@ -119,7 +120,7 @@ class AlarmEditorViewModel(
     }
 
     fun updateSnoozeEnabled(enabled: Boolean) {
-        uiState = uiState.copy(snoozeEnabled = enabled, errorMessage = null)
+        uiState = uiState.copy(snoozeEnabled = enabled, errorMessageRes = null)
     }
 
     fun updateEnabled(enabled: Boolean) {
@@ -136,20 +137,20 @@ class AlarmEditorViewModel(
         val snooze = uiState.snoozeMinutes.toIntOrNull()
 
         if (hour == null || hour !in 0..23 || minute == null || minute !in 0..59) {
-            uiState = uiState.copy(errorMessage = "Enter a valid time.")
+            uiState = uiState.copy(errorMessageRes = R.string.error_invalid_time)
             return
         }
         if (uiState.type == AlarmType.ROUTINE && uiState.routineGroupId == null) {
-            uiState = uiState.copy(errorMessage = "Choose a routine group first.")
+            uiState = uiState.copy(errorMessageRes = R.string.error_choose_routine_group)
             return
         }
         if (uiState.snoozeEnabled && (snooze == null || snooze !in 1..30)) {
-            uiState = uiState.copy(errorMessage = "Snooze must be between 1 and 30 minutes.")
+            uiState = uiState.copy(errorMessageRes = R.string.error_snooze_range)
             return
         }
 
         viewModelScope.launch {
-            uiState = uiState.copy(isSaving = true, errorMessage = null)
+            uiState = uiState.copy(isSaving = true, errorMessageRes = null)
             coordinator.saveAlarm(
                 AlarmDraft(
                     id = uiState.id,

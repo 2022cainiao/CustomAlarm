@@ -52,7 +52,7 @@ class AlarmRingingController(private val context: Context) {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
-            .setContentText("Alarm ringing")
+            .setContentText(context.getString(R.string.status_alarm_ringing))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setOngoing(true)
@@ -60,10 +60,10 @@ class AlarmRingingController(private val context: Context) {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(contentIntent)
             .setFullScreenIntent(contentIntent, true)
-            .addAction(0, "Dismiss", dismissIntent)
+            .addAction(0, context.getString(R.string.action_dismiss), dismissIntent)
 
         if (snoozeEnabled) {
-            builder.addAction(0, "Snooze ${snoozeMinutes} min", snoozeIntent)
+            builder.addAction(0, context.getString(R.string.action_snooze_minutes, snoozeMinutes), snoozeIntent)
         }
 
         return builder.build()
@@ -75,10 +75,10 @@ class AlarmRingingController(private val context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Alarm alerts",
+            context.getString(R.string.alarm_channel_name),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Notifications for ringing alarms"
+            description = context.getString(R.string.alarm_channel_description)
             lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
         }
         notificationManager.createNotificationChannel(channel)

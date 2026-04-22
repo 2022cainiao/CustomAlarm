@@ -31,7 +31,8 @@ data class UpcomingAlarmSummary(
     val label: String,
     val repeatDays: List<Int>,
     val nextTriggerAt: Long,
-    val sourceLabel: String
+    val isRoutineAlarm: Boolean,
+    val routineGroupName: String? = null
 )
 
 data class HomeUiState(
@@ -101,7 +102,8 @@ class HomeViewModel(
                                 label = alarm.label,
                                 repeatDays = alarm.repeatDays,
                                 nextTriggerAt = requireNotNull(alarm.nextTriggerAt),
-                                sourceLabel = "Routine | ${groupWithAlarms.group.name}"
+                                isRoutineAlarm = true,
+                                routineGroupName = groupWithAlarms.group.name
                             )
                         }
                 }
@@ -115,7 +117,7 @@ class HomeViewModel(
                             label = alarm.label,
                             repeatDays = alarm.repeatDays,
                             nextTriggerAt = requireNotNull(alarm.nextTriggerAt),
-                            sourceLabel = "Standard alarm"
+                            isRoutineAlarm = false
                         )
                     } + effectiveRoutineAlarms
                     )

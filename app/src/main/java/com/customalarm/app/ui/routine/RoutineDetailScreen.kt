@@ -23,8 +23,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
 import com.customalarm.app.util.formatAlarmTime
 import com.customalarm.app.util.formatNextTrigger
@@ -42,6 +45,7 @@ fun RoutineDetailScreen(
     onDeleted: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     if (!state.exists) {
         Column(
@@ -49,8 +53,8 @@ fun RoutineDetailScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Routine group not found")
-            OutlinedButton(onClick = onBack) { Text("Back") }
+            Text(stringResource(R.string.empty_routine_group_not_found))
+            OutlinedButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
         }
         return
     }
@@ -58,7 +62,7 @@ fun RoutineDetailScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text(state.groupName) },
-            navigationIcon = { OutlinedButton(onClick = onBack) { Text("Back") } }
+            navigationIcon = { OutlinedButton(onClick = onBack) { Text(stringResource(R.string.action_back)) } }
         )
         LazyColumn(
             modifier = Modifier
@@ -76,7 +80,7 @@ fun RoutineDetailScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Routine master switch",
+                                    text = stringResource(R.string.label_routine_master_switch),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -84,16 +88,16 @@ fun RoutineDetailScreen(
                                     .filter { it.enabled && state.enabled }
                                     .mapNotNull { it.nextTriggerAt }
                                     .minOrNull()
-                                Text("Next ring: ${formatNextTrigger(nextTrigger)}")
+                                Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, nextTrigger)))
                             }
                             Switch(checked = state.enabled, onCheckedChange = viewModel::toggleGroup)
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onEditGroup) { Text("Edit group") }
+                            OutlinedButton(onClick = onEditGroup) { Text(stringResource(R.string.action_edit_group)) }
                             OutlinedButton(onClick = { viewModel.deleteGroup(onDeleted) }) {
-                                Text("Delete group")
+                                Text(stringResource(R.string.action_delete_group))
                             }
-                            Button(onClick = onAddAlarm) { Text("Add alarm") }
+                            Button(onClick = onAddAlarm) { Text(stringResource(R.string.action_add_group_alarm)) }
                         }
                     }
                 }
@@ -102,7 +106,7 @@ fun RoutineDetailScreen(
             if (state.alarms.isEmpty()) {
                 item {
                     Card(modifier = Modifier.fillMaxWidth()) {
-                        Text("No alarms in this routine group yet", modifier = Modifier.padding(16.dp))
+                        Text(stringResource(R.string.empty_routine_group_alarms), modifier = Modifier.padding(16.dp))
                     }
                 }
             } else {
@@ -111,6 +115,7 @@ fun RoutineDetailScreen(
                         alarm = alarm,
                         onToggle = { viewModel.toggleAlarm(alarm.id, it) },
                         onEdit = { onEditAlarm(alarm.id) },
+                        onMoveToStandard = { viewModel.moveAlarmToStandard(alarm.id) },
                         onDelete = { viewModel.deleteAlarm(alarm.id) }
                     )
                 }
@@ -124,8 +129,10 @@ private fun RoutineAlarmCard(
     alarm: AlarmEntity,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit,
+    onMoveToStandard: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -138,15 +145,16 @@ private fun RoutineAlarmCard(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(alarm.label.ifBlank { "Unnamed alarm" })
+                    Text(alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) })
                 }
                 Switch(checked = alarm.enabled, onCheckedChange = onToggle)
             }
-            Text(formatRepeatDays(alarm.repeatDays))
-            Text("Next ring: ${formatNextTrigger(alarm.nextTriggerAt)}")
+            Text(formatRepeatDays(context, alarm.repeatDays))
+            Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit) { Text("Edit") }
-                OutlinedButton(onClick = onDelete) { Text("Delete") }
+                OutlinedButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
+                OutlinedButton(onClick = onMoveToStandard) { Text(stringResource(R.string.action_move_to_standard)) }
+                OutlinedButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) }
             }
         }
     }

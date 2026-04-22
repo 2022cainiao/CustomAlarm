@@ -33,8 +33,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
 import com.customalarm.app.util.formatAlarmTime
 import com.customalarm.app.util.formatNextTrigger
@@ -55,17 +58,18 @@ fun HomeScreen(
     onOpenRoutineGroup: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Custom Alarm") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.screen_home_title)) }) },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(onClick = onAddRoutineGroup) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add routine group")
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add_routine_group))
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 FloatingActionButton(onClick = onAddNormalAlarm) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add alarm")
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add_alarm))
                 }
             }
         }
@@ -98,10 +102,10 @@ fun HomeScreen(
                 )
             }
 
-            item { SectionHeader(title = "Coming up") }
+            item { SectionHeader(title = stringResource(R.string.label_coming_up)) }
 
             if (uiState.upcomingAlarms.isEmpty()) {
-                item { EmptyState("No active alarms scheduled") }
+                item { EmptyState(stringResource(R.string.empty_active_alarms)) }
             } else {
                 items(uiState.upcomingAlarms, key = { it.alarmId }) { alarm ->
                     UpcomingAlarmCard(
@@ -111,10 +115,10 @@ fun HomeScreen(
                 }
             }
 
-            item { SectionHeader(title = "Standard alarms") }
+            item { SectionHeader(title = stringResource(R.string.label_standard_alarms)) }
 
             if (uiState.normalAlarms.isEmpty()) {
-                item { EmptyState("No standard alarms yet") }
+                item { EmptyState(stringResource(R.string.empty_standard_alarms)) }
             } else {
                 items(uiState.normalAlarms, key = { it.id }) { alarm ->
                     AlarmCard(
@@ -126,10 +130,10 @@ fun HomeScreen(
                 }
             }
 
-            item { SectionHeader(title = "Routine groups") }
+            item { SectionHeader(title = stringResource(R.string.label_routine_groups)) }
 
             if (uiState.routineGroups.isEmpty()) {
-                item { EmptyState("No routine groups yet") }
+                item { EmptyState(stringResource(R.string.empty_routine_groups)) }
             } else {
                 items(uiState.routineGroups, key = { it.id }) { group ->
                     Card(
@@ -146,7 +150,12 @@ fun HomeScreen(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "${group.activeCount} active of ${group.alarmCount} | ${formatNextTrigger(group.nextTriggerAt)}",
+                                        text = stringResource(
+                                            R.string.label_active_of_total,
+                                            group.activeCount,
+                                            group.alarmCount,
+                                            formatNextTrigger(context, group.nextTriggerAt)
+                                        ),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
@@ -161,7 +170,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 OutlinedButton(onClick = { onOpenRoutineGroup(group.id) }) {
-                                    Text("Open group")
+                                    Text(stringResource(R.string.action_open_group))
                                     Icon(Icons.Filled.ArrowForward, contentDescription = null)
                                 }
                             }
@@ -182,6 +191,7 @@ private fun OverviewCard(
     effectiveRoutineAlarmCount: Int,
     nextTriggerAt: Long?
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -193,34 +203,34 @@ private fun OverviewCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Overview",
+                text = stringResource(R.string.label_overview),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Next active alarm: ${formatNextTrigger(nextTriggerAt)}",
+                text = stringResource(R.string.label_next_active_alarm, formatNextTrigger(context, nextTriggerAt)),
                 style = MaterialTheme.typography.bodyLarge
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OverviewMetric(
-                    title = "All alarms",
+                    title = stringResource(R.string.label_all_alarms),
                     value = totalAlarmCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
                 OverviewMetric(
-                    title = "Standard on",
+                    title = stringResource(R.string.label_standard_on),
                     value = enabledNormalCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OverviewMetric(
-                    title = "Routine groups on",
+                    title = stringResource(R.string.label_routine_groups_on),
                     value = "$enabledRoutineGroupCount / $routineGroupCount",
                     modifier = Modifier.weight(1f)
                 )
                 OverviewMetric(
-                    title = "Routine alarms active",
+                    title = stringResource(R.string.label_routine_alarms_active),
                     value = effectiveRoutineAlarmCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
@@ -262,18 +272,28 @@ private fun PermissionCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Permissions", style = MaterialTheme.typography.titleMedium)
-            Text("Exact alarms: ${if (exactAlarmEnabled) "Enabled" else "Disabled"}")
-            Text("Notifications: ${if (notificationsEnabled) "Enabled" else "Disabled"}")
+            Text(stringResource(R.string.label_permissions), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(
+                    R.string.label_exact_alarms,
+                    stringResource(if (exactAlarmEnabled) R.string.label_enabled else R.string.label_disabled)
+                )
+            )
+            Text(
+                stringResource(
+                    R.string.label_notifications,
+                    stringResource(if (notificationsEnabled) R.string.label_enabled else R.string.label_disabled)
+                )
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!exactAlarmEnabled) {
                     OutlinedButton(onClick = onRequestExactAlarmPermission) {
-                        Text("Enable exact alarms")
+                        Text(stringResource(R.string.action_enable_exact_alarms))
                     }
                 }
                 if (!notificationsEnabled) {
                     OutlinedButton(onClick = onRequestNotificationPermission) {
-                        Text("Enable notifications")
+                        Text(stringResource(R.string.action_enable_notifications))
                     }
                 }
             }
@@ -298,6 +318,7 @@ private fun UpcomingAlarmCard(
     alarm: UpcomingAlarmSummary,
     onOpen: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -314,15 +335,21 @@ private fun UpcomingAlarmCard(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(alarm.label.ifBlank { "Unnamed alarm" })
+                    Text(alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) })
                 }
                 OutlinedButton(onClick = onOpen) {
-                    Text("Open")
+                    Text(stringResource(R.string.status_open))
                 }
             }
-            Text(alarm.sourceLabel)
-            Text(formatRepeatDays(alarm.repeatDays))
-            Text("Next ring: ${formatNextTrigger(alarm.nextTriggerAt)}")
+            Text(
+                if (alarm.isRoutineAlarm) {
+                    stringResource(R.string.label_source_routine_alarm, alarm.routineGroupName.orEmpty())
+                } else {
+                    stringResource(R.string.label_source_standard_alarm)
+                }
+            )
+            Text(formatRepeatDays(context, alarm.repeatDays))
+            Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
         }
     }
 }
@@ -334,6 +361,7 @@ private fun AlarmCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -346,17 +374,17 @@ private fun AlarmCard(
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(alarm.label.ifBlank { "Unnamed alarm" })
+                    Text(alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) })
                 }
                 Switch(checked = alarm.enabled, onCheckedChange = onToggle)
             }
-            Text(formatRepeatDays(alarm.repeatDays))
-            Text("Next ring: ${formatNextTrigger(alarm.nextTriggerAt)}")
+            Text(formatRepeatDays(context, alarm.repeatDays))
+            Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit) { Text("Edit") }
+                OutlinedButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
                 OutlinedButton(onClick = onDelete) {
                     Icon(Icons.Filled.Delete, contentDescription = null)
-                    Text("Delete")
+                    Text(stringResource(R.string.action_delete))
                 }
             }
         }

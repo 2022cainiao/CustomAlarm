@@ -1,4 +1,100 @@
 <resources>
-    <string name="app_name">自定义闹钟</string>
-</resources>
+    <string name="app_name">Custom Alarm</string>
 
+    <string name="action_back">Back</string>
+    <string name="action_add_alarm">Add alarm</string>
+    <string name="action_add_group_alarm">Add group alarm</string>
+    <string name="action_add_routine_group">Add routine group</string>
+    <string name="action_open_group">Open group</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_edit_group">Edit group</string>
+    <string name="action_move_to_standard">Move to standard</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_delete_group">Delete group</string>
+    <string name="action_choose">Choose</string>
+    <string name="action_use_default">Use default</string>
+    <string name="action_enable_exact_alarms">Enable exact alarms</string>
+    <string name="action_enable_notifications">Enable notifications</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_save_alarm">Save alarm</string>
+    <string name="action_save_routine_group">Save routine group</string>
+    <string name="action_snooze_minutes">Snooze %1$d min</string>
+
+    <string name="label_permissions">Permissions</string>
+    <string name="label_exact_alarms">Exact alarms: %1$s</string>
+    <string name="label_notifications">Notifications: %1$s</string>
+    <string name="label_enabled">Enabled</string>
+    <string name="label_disabled">Disabled</string>
+    <string name="label_overview">Overview</string>
+    <string name="label_next_active_alarm">Next active alarm: %1$s</string>
+    <string name="label_all_alarms">All alarms</string>
+    <string name="label_standard_on">Standard on</string>
+    <string name="label_routine_groups_on">Routine groups on</string>
+    <string name="label_routine_alarms_active">Routine alarms active</string>
+    <string name="label_coming_up">Coming up</string>
+    <string name="label_standard_alarms">Standard alarms</string>
+    <string name="label_routine_groups">Routine groups</string>
+    <string name="label_type">Type</string>
+    <string name="label_alarm_placement">Alarm placement</string>
+    <string name="label_standard">Standard</string>
+    <string name="label_routine">Routine</string>
+    <string name="label_routine_group">Routine group</string>
+    <string name="label_time">Time</string>
+    <string name="label_hour">Hour</string>
+    <string name="label_minute">Minute</string>
+    <string name="label_alarm_label">Label</string>
+    <string name="label_repeat">Repeat</string>
+    <string name="label_alert_settings">Alert settings</string>
+    <string name="label_vibrate">Vibrate</string>
+    <string name="label_snooze">Snooze</string>
+    <string name="label_snooze_minutes">Snooze minutes</string>
+    <string name="label_enable_after_saving">Enable after saving</string>
+    <string name="label_ringtone">Ringtone: %1$s</string>
+    <string name="label_system_default">System default</string>
+    <string name="label_next_ring">Next ring: %1$s</string>
+    <string name="label_active_of_total">%1$d active of %2$d | %3$s</string>
+    <string name="label_source_standard_alarm">Standard alarm</string>
+    <string name="label_source_routine_alarm">Routine | %1$s</string>
+    <string name="label_routine_master_switch">Routine master switch</string>
+    <string name="label_routine_group_name">Routine name</string>
+
+    <string name="screen_home_title">Custom Alarm</string>
+    <string name="screen_add_alarm">Add alarm</string>
+    <string name="screen_edit_alarm">Edit alarm</string>
+    <string name="screen_add_routine_group">Add routine group</string>
+    <string name="screen_edit_routine_group">Edit routine group</string>
+
+    <string name="empty_standard_alarms">No standard alarms yet</string>
+    <string name="empty_routine_groups">No routine groups yet</string>
+    <string name="empty_active_alarms">No active alarms scheduled</string>
+    <string name="empty_routine_group_not_found">Routine group not found</string>
+    <string name="empty_routine_group_alarms">No alarms in this routine group yet</string>
+    <string name="empty_unnamed_alarm">Unnamed alarm</string>
+    <string name="hint_standard_alarm_management">Saving as Standard removes this alarm from any routine group.</string>
+    <string name="hint_routine_alarm_management">Select a routine group below to keep this alarm there or move it to another group.</string>
+    <string name="hint_create_routine_group_first">Create a routine group first or switch this alarm back to Standard.</string>
+
+    <string name="status_saving">Saving...</string>
+    <string name="status_alarm_ringing">Alarm ringing</string>
+    <string name="status_open">Open</string>
+
+    <string name="error_invalid_time">Enter a valid time.</string>
+    <string name="error_choose_routine_group">Choose a routine group first.</string>
+    <string name="error_snooze_range">Snooze must be between 1 and 30 minutes.</string>
+    <string name="error_enter_routine_name">Enter a routine group name.</string>
+
+    <string name="alarm_channel_name">Alarm alerts</string>
+    <string name="alarm_channel_description">Notifications for ringing alarms</string>
+
+    <string name="repeat_one_time">One time</string>
+    <string name="repeat_workdays">Workdays</string>
+    <string name="repeat_weekend">Weekend</string>
+    <string name="repeat_every_day">Every day</string>
+    <string name="day_mon_short">Mon</string>
+    <string name="day_tue_short">Tue</string>
+    <string name="day_wed_short">Wed</string>
+    <string name="day_thu_short">Thu</string>
+    <string name="day_fri_short">Fri</string>
+    <string name="day_sat_short">Sat</string>
+    <string name="day_sun_short">Sun</string>
+</resources>

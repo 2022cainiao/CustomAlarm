@@ -1,38 +1,39 @@
 package com.customalarm.app.util
 
+import android.content.Context
+import com.customalarm.app.R
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
-private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm", Locale.US)
+private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
 
 fun formatAlarmTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour, minute)
 
-fun formatRepeatDays(days: List<Int>): String {
-    if (days.isEmpty()) return "One time"
+fun formatRepeatDays(context: Context, days: List<Int>): String {
+    if (days.isEmpty()) return context.getString(R.string.repeat_one_time)
 
     val sorted = days.sorted()
     val weekDayMap = mapOf(
-        1 to "Mon",
-        2 to "Tue",
-        3 to "Wed",
-        4 to "Thu",
-        5 to "Fri",
-        6 to "Sat",
-        7 to "Sun"
+        1 to context.getString(R.string.day_mon_short),
+        2 to context.getString(R.string.day_tue_short),
+        3 to context.getString(R.string.day_wed_short),
+        4 to context.getString(R.string.day_thu_short),
+        5 to context.getString(R.string.day_fri_short),
+        6 to context.getString(R.string.day_sat_short),
+        7 to context.getString(R.string.day_sun_short)
     )
 
-    if (sorted == listOf(1, 2, 3, 4, 5)) return "Workdays"
-    if (sorted == listOf(6, 7)) return "Weekend"
-    if (sorted == listOf(1, 2, 3, 4, 5, 6, 7)) return "Every day"
+    if (sorted == listOf(1, 2, 3, 4, 5)) return context.getString(R.string.repeat_workdays)
+    if (sorted == listOf(6, 7)) return context.getString(R.string.repeat_weekend)
+    if (sorted == listOf(1, 2, 3, 4, 5, 6, 7)) return context.getString(R.string.repeat_every_day)
 
     return sorted.joinToString(" ") { weekDayMap[it].orEmpty() }
 }
 
-fun formatNextTrigger(triggerAt: Long?): String {
-    if (triggerAt == null) return "Disabled"
+fun formatNextTrigger(context: Context, triggerAt: Long?): String {
+    if (triggerAt == null) return context.getString(R.string.label_disabled)
     return Instant.ofEpochMilli(triggerAt)
         .atZone(ZoneId.systemDefault())
         .format(dateTimeFormatter)

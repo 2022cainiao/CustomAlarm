@@ -64,6 +64,17 @@ class AlarmCoordinator(
         alarmScheduler.refreshAll()
     }
 
+    suspend fun moveAlarmToStandard(alarmId: Long) {
+        val current = alarmRepository.getAlarm(alarmId) ?: return
+        alarmRepository.saveAlarm(
+            current.copy(
+                type = AlarmType.NORMAL,
+                routineGroupId = null
+            )
+        )
+        alarmScheduler.refreshAll()
+    }
+
     suspend fun saveRoutineGroup(draft: RoutineGroupDraft): Long {
         val existing = if (draft.id == 0L) null else routineGroupRepository.getRoutineGroup(draft.id)
         val groupId = routineGroupRepository.saveRoutineGroup(
@@ -107,4 +118,3 @@ class AlarmCoordinator(
         alarmScheduler.refreshAll()
     }
 }
-

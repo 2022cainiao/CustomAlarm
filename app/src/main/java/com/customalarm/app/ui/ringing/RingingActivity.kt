@@ -21,8 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.customalarm.app.R
 import com.customalarm.app.domain.AlarmRingingController
 import com.customalarm.app.service.AlarmPlaybackService
 import com.customalarm.app.ui.theme.CustomAlarmTheme
@@ -117,15 +119,18 @@ private fun RingingRoute(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Text(label.ifBlank { "Alarm ringing" }, style = MaterialTheme.typography.headlineSmall)
+        Text(
+            label.ifBlank { stringResource(R.string.status_alarm_ringing) },
+            style = MaterialTheme.typography.headlineSmall
+        )
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick = { onDismiss(alarmId) }) {
-            Text("Dismiss")
+            Text(stringResource(R.string.action_dismiss))
         }
         if (snoozeEnabled) {
             Spacer(modifier = Modifier.height(12.dp))
             Button(onClick = { onSnooze(alarmId, snoozeMinutes) }) {
-                Text("Snooze ${snoozeMinutes} min")
+                Text(stringResource(R.string.action_snooze_minutes, snoozeMinutes))
             }
         }
     }

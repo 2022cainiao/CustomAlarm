@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.customalarm.app.R
 import com.customalarm.app.AppContainer
 import com.customalarm.app.domain.RoutineGroupDraft
 import kotlinx.coroutines.launch
@@ -16,7 +17,7 @@ data class RoutineGroupEditorUiState(
     val isSaving: Boolean = false,
     val name: String = "",
     val enabled: Boolean = true,
-    val errorMessage: String? = null,
+    val errorMessageRes: Int? = null,
     val saved: Boolean = false
 )
 
@@ -44,7 +45,7 @@ class RoutineGroupEditorViewModel(
     }
 
     fun updateName(value: String) {
-        uiState = uiState.copy(name = value, errorMessage = null)
+        uiState = uiState.copy(name = value, errorMessageRes = null)
     }
 
     fun updateEnabled(enabled: Boolean) {
@@ -53,11 +54,11 @@ class RoutineGroupEditorViewModel(
 
     fun save() {
         if (uiState.name.isBlank()) {
-            uiState = uiState.copy(errorMessage = "Enter a routine group name.")
+            uiState = uiState.copy(errorMessageRes = R.string.error_enter_routine_name)
             return
         }
         viewModelScope.launch {
-            uiState = uiState.copy(isSaving = true, errorMessage = null)
+            uiState = uiState.copy(isSaving = true, errorMessageRes = null)
             container.alarmCoordinator.saveRoutineGroup(
                 RoutineGroupDraft(
                     id = uiState.id,

@@ -44,6 +44,12 @@ class RoutineDetailViewModel(
         }
     }
 
+    fun moveAlarmToStandard(alarmId: Long) {
+        viewModelScope.launch {
+            coordinator.moveAlarmToStandard(alarmId)
+        }
+    }
+
     fun deleteGroup(onDeleted: () -> Unit) {
         viewModelScope.launch {
             coordinator.deleteRoutineGroup(uiState.value.groupId)
@@ -81,4 +87,3 @@ class RoutineDetailViewModel(
         }
     }
 }
-

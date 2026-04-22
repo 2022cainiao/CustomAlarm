@@ -20,7 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.customalarm.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,8 +50,16 @@ fun RoutineGroupEditorScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text(if (state.id == 0L) "Add routine group" else "Edit routine group") },
-            navigationIcon = { OutlinedButton(onClick = onBack) { Text("Back") } }
+            title = {
+                Text(
+                    if (state.id == 0L) {
+                        stringResource(R.string.screen_add_routine_group)
+                    } else {
+                        stringResource(R.string.screen_edit_routine_group)
+                    }
+                )
+            },
+            navigationIcon = { OutlinedButton(onClick = onBack) { Text(stringResource(R.string.action_back)) } }
         )
         Column(
             modifier = Modifier
@@ -60,22 +70,28 @@ fun RoutineGroupEditorScreen(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = viewModel::updateName,
-                label = { Text("Routine name") },
+                label = { Text(stringResource(R.string.label_routine_group_name)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Enable after saving", modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.label_enable_after_saving), modifier = Modifier.weight(1f))
                 Switch(checked = state.enabled, onCheckedChange = viewModel::updateEnabled)
             }
-            state.errorMessage?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
+            state.errorMessageRes?.let {
+                Text(stringResource(it), color = MaterialTheme.colorScheme.error)
             }
             Button(
                 onClick = viewModel::save,
                 enabled = !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (state.isSaving) "Saving..." else "Save routine group")
+                Text(
+                    if (state.isSaving) {
+                        stringResource(R.string.status_saving)
+                    } else {
+                        stringResource(R.string.action_save_routine_group)
+                    }
+                )
             }
         }
     }
