@@ -18,13 +18,32 @@ data class RoutineGroupSummary(
     val name: String,
     val enabled: Boolean,
     val alarms: List<AlarmEntity>,
+    val alarmCount: Int,
     val activeCount: Int,
     val nextTriggerAt: Long?
 )
 
+data class UpcomingAlarmSummary(
+    val alarmId: Long,
+    val routineGroupId: Long?,
+    val hour: Int,
+    val minute: Int,
+    val label: String,
+    val repeatDays: List<Int>,
+    val nextTriggerAt: Long,
+    val sourceLabel: String
+)
+
 data class HomeUiState(
     val normalAlarms: List<AlarmEntity> = emptyList(),
-    val routineGroups: List<RoutineGroupSummary> = emptyList()
+    val routineGroups: List<RoutineGroupSummary> = emptyList(),
+    val upcomingAlarms: List<UpcomingAlarmSummary> = emptyList(),
+    val totalAlarmCount: Int = 0,
+    val enabledNormalCount: Int = 0,
+    val routineGroupCount: Int = 0,
+    val enabledRoutineGroupCount: Int = 0,
+    val effectiveRoutineAlarmCount: Int = 0,
+    val nextTriggerAt: Long? = null
 )
 
 class HomeViewModel(
@@ -57,9 +76,62 @@ class HomeViewModel(
                 container.alarmRepository.observeNormalAlarms(),
                 container.routineGroupRepository.observeRoutineGroupsWithAlarms()
             ) { normalAlarms, routineGroups ->
+                val sortedNormalAlarms = normalAlarms.sortedWith(
+                    compareBy<AlarmEntity> { it.nextTriggerAt ?: Long.MAX_VALUE }
+                        .thenBy { it.id }
+                )
+                val routineSummaries = routineGroups
+                    .map { it.toSummary() }
+                    .sortedWith(
+                        compareBy<RoutineGroupSummary> { it.nextTriggerAt ?: Long.MAX_VALUE }
+                            .thenBy { it.name.lowercase() }
+                    )
+                val effectiveNormalAlarms = sortedNormalAlarms.filter {
+                    it.enabled && it.nextTriggerAt != null
+                }
+                val effectiveRoutineAlarms = routineGroups.flatMap { groupWithAlarms ->
+                    groupWithAlarms.alarms
+                        .filter { it.enabled && groupWithAlarms.group.enabled && it.nextTriggerAt != null }
+                        .map { alarm ->
+                            UpcomingAlarmSummary(
+                                alarmId = alarm.id,
+                                routineGroupId = groupWithAlarms.group.id,
+                                hour = alarm.hour,
+                                minute = alarm.minute,
+                                label = alarm.label,
+                                repeatDays = alarm.repeatDays,
+                                nextTriggerAt = requireNotNull(alarm.nextTriggerAt),
+                                sourceLabel = "Routine | ${groupWithAlarms.group.name}"
+                            )
+                        }
+                }
+                val upcomingAlarms = (
+                    effectiveNormalAlarms.map { alarm ->
+                        UpcomingAlarmSummary(
+                            alarmId = alarm.id,
+                            routineGroupId = null,
+                            hour = alarm.hour,
+                            minute = alarm.minute,
+                            label = alarm.label,
+                            repeatDays = alarm.repeatDays,
+                            nextTriggerAt = requireNotNull(alarm.nextTriggerAt),
+                            sourceLabel = "Standard alarm"
+                        )
+                    } + effectiveRoutineAlarms
+                    )
+                    .sortedBy { it.nextTriggerAt }
+                    .take(6)
+
                 HomeUiState(
-                    normalAlarms = normalAlarms,
-                    routineGroups = routineGroups.map { it.toSummary() }
+                    normalAlarms = sortedNormalAlarms,
+                    routineGroups = routineSummaries,
+                    upcomingAlarms = upcomingAlarms,
+                    totalAlarmCount = sortedNormalAlarms.size + routineGroups.sumOf { it.alarms.size },
+                    enabledNormalCount = sortedNormalAlarms.count { it.enabled },
+                    routineGroupCount = routineSummaries.size,
+                    enabledRoutineGroupCount = routineSummaries.count { it.enabled },
+                    effectiveRoutineAlarmCount = routineSummaries.sumOf { it.activeCount },
+                    nextTriggerAt = upcomingAlarms.firstOrNull()?.nextTriggerAt
                 )
             }.stateIn(
                 scope = container.applicationScope,
@@ -86,6 +158,7 @@ private fun RoutineGroupWithAlarms.toSummary(): RoutineGroupSummary {
         name = group.name,
         enabled = group.enabled,
         alarms = alarms,
+        alarmCount = alarms.size,
         activeCount = effectiveAlarms.size,
         nextTriggerAt = effectiveAlarms.mapNotNull { it.nextTriggerAt }.minOrNull()
     )

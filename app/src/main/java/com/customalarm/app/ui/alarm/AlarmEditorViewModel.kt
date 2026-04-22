@@ -76,11 +76,11 @@ class AlarmEditorViewModel(
     }
 
     fun updateHour(value: String) {
-        uiState = uiState.copy(hour = value.take(2), errorMessage = null)
+        uiState = uiState.copy(hour = value.filter(Char::isDigit).take(2), errorMessage = null)
     }
 
     fun updateMinute(value: String) {
-        uiState = uiState.copy(minute = value.take(2), errorMessage = null)
+        uiState = uiState.copy(minute = value.filter(Char::isDigit).take(2), errorMessage = null)
     }
 
     fun updateLabel(value: String) {
@@ -88,13 +88,17 @@ class AlarmEditorViewModel(
     }
 
     fun updateSnoozeMinutes(value: String) {
-        uiState = uiState.copy(snoozeMinutes = value.take(2), errorMessage = null)
+        uiState = uiState.copy(snoozeMinutes = value.filter(Char::isDigit).take(2), errorMessage = null)
     }
 
     fun updateType(type: AlarmType) {
         uiState = uiState.copy(
             type = type,
-            routineGroupId = if (type == AlarmType.ROUTINE) uiState.routineGroupId ?: uiState.availableGroups.firstOrNull()?.id else null,
+            routineGroupId = if (type == AlarmType.ROUTINE) {
+                uiState.routineGroupId ?: uiState.availableGroups.firstOrNull()?.id
+            } else {
+                null
+            },
             errorMessage = null
         )
     }
@@ -115,7 +119,7 @@ class AlarmEditorViewModel(
     }
 
     fun updateSnoozeEnabled(enabled: Boolean) {
-        uiState = uiState.copy(snoozeEnabled = enabled)
+        uiState = uiState.copy(snoozeEnabled = enabled, errorMessage = null)
     }
 
     fun updateEnabled(enabled: Boolean) {
@@ -130,16 +134,17 @@ class AlarmEditorViewModel(
         val hour = uiState.hour.toIntOrNull()
         val minute = uiState.minute.toIntOrNull()
         val snooze = uiState.snoozeMinutes.toIntOrNull()
+
         if (hour == null || hour !in 0..23 || minute == null || minute !in 0..59) {
-            uiState = uiState.copy(errorMessage = "请输入正确的时间")
+            uiState = uiState.copy(errorMessage = "Enter a valid time.")
             return
         }
         if (uiState.type == AlarmType.ROUTINE && uiState.routineGroupId == null) {
-            uiState = uiState.copy(errorMessage = "请选择作息组")
+            uiState = uiState.copy(errorMessage = "Choose a routine group first.")
             return
         }
         if (uiState.snoozeEnabled && (snooze == null || snooze !in 1..30)) {
-            uiState = uiState.copy(errorMessage = "贪睡时长请设置在 1-30 分钟")
+            uiState = uiState.copy(errorMessage = "Snooze must be between 1 and 30 minutes.")
             return
         }
 
@@ -188,4 +193,3 @@ class AlarmEditorViewModel(
         }
     }
 }
-

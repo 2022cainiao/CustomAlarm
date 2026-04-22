@@ -5,30 +5,34 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.CHINA)
-private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm", Locale.CHINA)
+private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
+private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm", Locale.US)
 
 fun formatAlarmTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour, minute)
 
 fun formatRepeatDays(days: List<Int>): String {
-    if (days.isEmpty()) return "仅一次"
+    if (days.isEmpty()) return "One time"
+
+    val sorted = days.sorted()
     val weekDayMap = mapOf(
-        1 to "周一",
-        2 to "周二",
-        3 to "周三",
-        4 to "周四",
-        5 to "周五",
-        6 to "周六",
-        7 to "周日"
+        1 to "Mon",
+        2 to "Tue",
+        3 to "Wed",
+        4 to "Thu",
+        5 to "Fri",
+        6 to "Sat",
+        7 to "Sun"
     )
-    if (days == listOf(1, 2, 3, 4, 5)) return "工作日"
-    if (days == listOf(6, 7)) return "周末"
-    if (days == listOf(1, 2, 3, 4, 5, 6, 7)) return "每天"
-    return days.sorted().joinToString(" ") { weekDayMap[it].orEmpty() }
+
+    if (sorted == listOf(1, 2, 3, 4, 5)) return "Workdays"
+    if (sorted == listOf(6, 7)) return "Weekend"
+    if (sorted == listOf(1, 2, 3, 4, 5, 6, 7)) return "Every day"
+
+    return sorted.joinToString(" ") { weekDayMap[it].orEmpty() }
 }
 
 fun formatNextTrigger(triggerAt: Long?): String {
-    if (triggerAt == null) return "未启用"
+    if (triggerAt == null) return "Disabled"
     return Instant.ofEpochMilli(triggerAt)
         .atZone(ZoneId.systemDefault())
         .format(dateTimeFormatter)
@@ -39,4 +43,3 @@ fun formatRingingClock(timestamp: Long = System.currentTimeMillis()): String {
         .atZone(ZoneId.systemDefault())
         .format(timeFormatter)
 }
-

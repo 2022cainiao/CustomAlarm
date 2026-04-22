@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -86,6 +87,30 @@ fun HomeScreen(
                 )
             }
 
+            item {
+                OverviewCard(
+                    totalAlarmCount = uiState.totalAlarmCount,
+                    enabledNormalCount = uiState.enabledNormalCount,
+                    routineGroupCount = uiState.routineGroupCount,
+                    enabledRoutineGroupCount = uiState.enabledRoutineGroupCount,
+                    effectiveRoutineAlarmCount = uiState.effectiveRoutineAlarmCount,
+                    nextTriggerAt = uiState.nextTriggerAt
+                )
+            }
+
+            item { SectionHeader(title = "Coming up") }
+
+            if (uiState.upcomingAlarms.isEmpty()) {
+                item { EmptyState("No active alarms scheduled") }
+            } else {
+                items(uiState.upcomingAlarms, key = { it.alarmId }) { alarm ->
+                    UpcomingAlarmCard(
+                        alarm = alarm,
+                        onOpen = { onEditAlarm(alarm.alarmId, alarm.routineGroupId) }
+                    )
+                }
+            }
+
             item { SectionHeader(title = "Standard alarms") }
 
             if (uiState.normalAlarms.isEmpty()) {
@@ -121,7 +146,7 @@ fun HomeScreen(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "${group.activeCount} active alarms · ${formatNextTrigger(group.nextTriggerAt)}",
+                                        text = "${group.activeCount} active of ${group.alarmCount} | ${formatNextTrigger(group.nextTriggerAt)}",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
@@ -144,6 +169,83 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun OverviewCard(
+    totalAlarmCount: Int,
+    enabledNormalCount: Int,
+    routineGroupCount: Int,
+    enabledRoutineGroupCount: Int,
+    effectiveRoutineAlarmCount: Int,
+    nextTriggerAt: Long?
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Overview",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Next active alarm: ${formatNextTrigger(nextTriggerAt)}",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OverviewMetric(
+                    title = "All alarms",
+                    value = totalAlarmCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                OverviewMetric(
+                    title = "Standard on",
+                    value = enabledNormalCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OverviewMetric(
+                    title = "Routine groups on",
+                    value = "$enabledRoutineGroupCount / $routineGroupCount",
+                    modifier = Modifier.weight(1f)
+                )
+                OverviewMetric(
+                    title = "Routine alarms active",
+                    value = effectiveRoutineAlarmCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverviewMetric(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -188,6 +290,40 @@ private fun SectionHeader(title: String) {
 private fun EmptyState(text: String) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Text(text, modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Composable
+private fun UpcomingAlarmCard(
+    alarm: UpcomingAlarmSummary,
+    onOpen: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = formatAlarmTime(alarm.hour, alarm.minute),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(alarm.label.ifBlank { "Unnamed alarm" })
+                }
+                OutlinedButton(onClick = onOpen) {
+                    Text("Open")
+                }
+            }
+            Text(alarm.sourceLabel)
+            Text(formatRepeatDays(alarm.repeatDays))
+            Text("Next ring: ${formatNextTrigger(alarm.nextTriggerAt)}")
+        }
     }
 }
 

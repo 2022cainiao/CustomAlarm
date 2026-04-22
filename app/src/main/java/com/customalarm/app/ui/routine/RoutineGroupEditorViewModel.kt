@@ -53,7 +53,7 @@ class RoutineGroupEditorViewModel(
 
     fun save() {
         if (uiState.name.isBlank()) {
-            uiState = uiState.copy(errorMessage = "请输入作息名称")
+            uiState = uiState.copy(errorMessage = "Enter a routine group name.")
             return
         }
         viewModelScope.launch {
@@ -80,4 +80,3 @@ class RoutineGroupEditorViewModel(
         }
     }
 }
-

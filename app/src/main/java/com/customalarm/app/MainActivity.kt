@@ -14,12 +14,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,7 +40,6 @@ import com.customalarm.app.ui.routine.RoutineDetailViewModel
 import com.customalarm.app.ui.routine.RoutineGroupEditorScreen
 import com.customalarm.app.ui.routine.RoutineGroupEditorViewModel
 import com.customalarm.app.ui.theme.CustomAlarmTheme
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,18 +57,35 @@ class MainActivity : ComponentActivity() {
 private fun AlarmApp() {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val container = context.appContainer
-    var refreshTick by remember { mutableStateOf(0) }
+    var permissionRefreshTick by remember { mutableStateOf(0) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) {
-        refreshTick++
+        permissionRefreshTick++
+    }
+    val exactAlarmEnabled = remember(permissionRefreshTick) {
+        container.alarmScheduler.canScheduleExactAlarms()
+    }
+    val notificationsEnabled = remember(permissionRefreshTick) {
+        notificationsEnabled(context)
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                permissionRefreshTick++
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     LaunchedEffect(Unit) {
-        launch {
-            container.alarmCoordinator.rebuildSchedules()
-        }
+        container.alarmCoordinator.rebuildSchedules()
     }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
@@ -79,8 +99,8 @@ private fun AlarmApp() {
                 HomeScreen(
                     viewModel = viewModel,
                     contentPadding = paddingValues,
-                    exactAlarmEnabled = container.alarmScheduler.canScheduleExactAlarms(),
-                    notificationsEnabled = notificationsEnabled(context),
+                    exactAlarmEnabled = exactAlarmEnabled,
+                    notificationsEnabled = notificationsEnabled,
                     onRequestExactAlarmPermission = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             context.startActivity(
@@ -125,9 +145,7 @@ private fun AlarmApp() {
                 AlarmEditorScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onSaved = {
-                        navController.popBackStack()
-                    }
+                    onSaved = { navController.popBackStack() }
                 )
             }
 
@@ -148,9 +166,7 @@ private fun AlarmApp() {
                     onEditAlarm = { alarmId ->
                         navController.navigate(NavRoutes.alarmEditor(alarmId, groupId))
                     },
-                    onDeleted = {
-                        navController.popBackStack()
-                    }
+                    onDeleted = { navController.popBackStack() }
                 )
             }
 
@@ -182,4 +198,3 @@ private fun notificationsEnabled(context: android.content.Context): Boolean {
         true
     }
 }
-
