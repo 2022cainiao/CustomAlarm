@@ -33,30 +33,10 @@ class AlarmScheduler(
 
     private fun scheduleAlarm(alarm: AlarmEntity, triggerAtMillis: Long) {
         val pendingIntent = pendingIntent(alarm.id)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-            alarmManager.setAlarmClock(
-                AlarmManager.AlarmClockInfo(triggerAtMillis, showAppPendingIntent(alarm.id)),
-                pendingIntent
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
-        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
-        }
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(triggerAtMillis, showAppPendingIntent(alarm.id)),
+            pendingIntent
+        )
     }
 
     fun canScheduleExactAlarms(): Boolean {

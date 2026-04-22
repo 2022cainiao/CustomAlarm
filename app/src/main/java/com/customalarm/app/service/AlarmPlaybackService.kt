@@ -3,6 +3,10 @@ package com.customalarm.app.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
@@ -19,10 +23,13 @@ import kotlinx.coroutines.launch
 
 class AlarmPlaybackService : Service() {
     private var ringtone: Ringtone? = null
+    private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmId: Long = -1L
     private var currentSnoozeMinutes: Int = 10
     private var canSnooze: Boolean = true
     private var vibrator: Vibrator? = null
+    private var audioManager: AudioManager? = null
+    private var audioFocusRequest: AudioFocusRequest? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -83,13 +90,79 @@ class AlarmPlaybackService : Service() {
 
     private fun playRingtone(ringtoneUri: String?) {
         stopPlayback()
-        val uri = ringtoneUri?.let(Uri::parse) ?: appContainer.alarmRingingController.defaultAlarmUri()
-        ringtone = RingtoneManager.getRingtone(this, uri)?.apply {
+        requestAudioFocus()
+        val primaryUri = ringtoneUri?.let(Uri::parse) ?: appContainer.alarmRingingController.defaultAlarmUri()
+        val fallbackUri = appContainer.alarmRingingController.defaultAlarmUri()
+
+        if (primaryUri != null && tryPlayWithMediaPlayer(primaryUri)) {
+            return
+        }
+        if (fallbackUri != null && fallbackUri != primaryUri && tryPlayWithMediaPlayer(fallbackUri)) {
+            return
+        }
+
+        val finalUri = fallbackUri ?: primaryUri ?: return
+        ringtone = RingtoneManager.getRingtone(this, finalUri)?.apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                audioAttributes = alarmAudioAttributes()
                 isLooping = true
             }
             play()
         }
+    }
+
+    private fun tryPlayWithMediaPlayer(uri: Uri): Boolean {
+        return runCatching {
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(alarmAudioAttributes())
+                setDataSource(this@AlarmPlaybackService, uri)
+                isLooping = true
+                prepare()
+                start()
+            }
+        }.onFailure {
+            Log.w(TAG, "Failed to play ringtone via MediaPlayer: $uri", it)
+        }.isSuccess
+    }
+
+    private fun alarmAudioAttributes(): AudioAttributes {
+        return AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+    }
+
+    private fun requestAudioFocus() {
+        val manager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager = manager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                .setAudioAttributes(alarmAudioAttributes())
+                .setAcceptsDelayedFocusGain(false)
+                .setWillPauseWhenDucked(false)
+                .build()
+            audioFocusRequest = request
+            manager.requestAudioFocus(request)
+        } else {
+            @Suppress("DEPRECATION")
+            manager.requestAudioFocus(
+                null,
+                AudioManager.STREAM_ALARM,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
+            )
+        }
+    }
+
+    private fun abandonAudioFocus() {
+        val manager = audioManager ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let(manager::abandonAudioFocusRequest)
+            audioFocusRequest = null
+        } else {
+            @Suppress("DEPRECATION")
+            manager.abandonAudioFocus(null)
+        }
+        audioManager = null
     }
 
     private fun startVibration() {
@@ -116,9 +189,15 @@ class AlarmPlaybackService : Service() {
     }
 
     private fun stopPlayback() {
+        mediaPlayer?.runCatching {
+            stop()
+            release()
+        }
+        mediaPlayer = null
         ringtone?.stop()
         ringtone = null
         vibrator?.cancel()
+        abandonAudioFocus()
     }
 
     override fun onDestroy() {

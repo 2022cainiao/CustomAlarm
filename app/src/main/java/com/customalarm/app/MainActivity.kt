@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -71,6 +72,9 @@ private fun AlarmApp() {
     val notificationsEnabled = remember(permissionRefreshTick) {
         notificationsEnabled(context)
     }
+    val batteryOptimizationIgnored = remember(permissionRefreshTick) {
+        batteryOptimizationIgnored(context)
+    }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -100,6 +104,7 @@ private fun AlarmApp() {
                     contentPadding = paddingValues,
                     exactAlarmEnabled = exactAlarmEnabled,
                     notificationsEnabled = notificationsEnabled,
+                    batteryOptimizationIgnored = batteryOptimizationIgnored,
                     onRequestExactAlarmPermission = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             context.startActivity(
@@ -112,6 +117,15 @@ private fun AlarmApp() {
                     onRequestNotificationPermission = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                    onRequestIgnoreBatteryOptimizations = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            context.startActivity(
+                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                    data = Uri.parse("package:${context.packageName}")
+                                }
+                            )
                         }
                     },
                     onSyncHolidayCalendar = { viewModel.syncHolidayCalendar() },
@@ -194,6 +208,15 @@ private fun notificationsEnabled(context: android.content.Context): Boolean {
             context,
             Manifest.permission.POST_NOTIFICATIONS
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    } else {
+        true
+    }
+}
+
+private fun batteryOptimizationIgnored(context: android.content.Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val powerManager = context.getSystemService(PowerManager::class.java)
+        powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
     } else {
         true
     }

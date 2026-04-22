@@ -67,8 +67,10 @@ fun HomeScreen(
     contentPadding: PaddingValues,
     exactAlarmEnabled: Boolean,
     notificationsEnabled: Boolean,
+    batteryOptimizationIgnored: Boolean,
     onRequestExactAlarmPermission: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
+    onRequestIgnoreBatteryOptimizations: () -> Unit,
     onSyncHolidayCalendar: () -> Unit,
     onAddNormalAlarm: () -> Unit,
     onAddRoutineGroup: () -> Unit,
@@ -164,8 +166,10 @@ fun HomeScreen(
                 PermissionCard(
                     exactAlarmEnabled = exactAlarmEnabled,
                     notificationsEnabled = notificationsEnabled,
+                    batteryOptimizationIgnored = batteryOptimizationIgnored,
                     onRequestExactAlarmPermission = onRequestExactAlarmPermission,
-                    onRequestNotificationPermission = onRequestNotificationPermission
+                    onRequestNotificationPermission = onRequestNotificationPermission,
+                    onRequestIgnoreBatteryOptimizations = onRequestIgnoreBatteryOptimizations
                 )
             }
 
@@ -442,8 +446,10 @@ private fun OverviewMetric(
 private fun PermissionCard(
     exactAlarmEnabled: Boolean,
     notificationsEnabled: Boolean,
+    batteryOptimizationIgnored: Boolean,
     onRequestExactAlarmPermission: () -> Unit,
-    onRequestNotificationPermission: () -> Unit
+    onRequestNotificationPermission: () -> Unit,
+    onRequestIgnoreBatteryOptimizations: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -470,6 +476,19 @@ private fun PermissionCard(
                     stringResource(if (notificationsEnabled) R.string.label_enabled else R.string.label_disabled)
                 )
             )
+            Text(
+                stringResource(
+                    R.string.label_battery_optimization,
+                    stringResource(if (batteryOptimizationIgnored) R.string.label_disabled else R.string.label_enabled)
+                )
+            )
+            if (!batteryOptimizationIgnored) {
+                Text(
+                    stringResource(R.string.hint_battery_optimization),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!exactAlarmEnabled) {
                     OutlinedButton(
@@ -485,6 +504,14 @@ private fun PermissionCard(
                         onClick = onRequestNotificationPermission
                     ) {
                         Text(stringResource(R.string.action_enable_notifications))
+                    }
+                }
+                if (!batteryOptimizationIgnored) {
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onRequestIgnoreBatteryOptimizations
+                    ) {
+                        Text(stringResource(R.string.action_disable_battery_optimization))
                     }
                 }
             }

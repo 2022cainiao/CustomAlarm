@@ -19,6 +19,7 @@
     <string name="action_use_default">Use default</string>
     <string name="action_enable_exact_alarms">Enable exact alarms</string>
     <string name="action_enable_notifications">Enable notifications</string>
+    <string name="action_disable_battery_optimization">Allow background alarms</string>
     <string name="action_change_language">Change language</string>
     <string name="action_sync_holiday_calendar">Sync holiday calendar</string>
     <string name="action_dismiss">Dismiss</string>
@@ -37,6 +38,7 @@
     <string name="label_holiday_sync_failed_using_local">Public sync failed. Using local data for now.</string>
     <string name="label_exact_alarms">Exact alarms: %1$s</string>
     <string name="label_notifications">Notifications: %1$s</string>
+    <string name="label_battery_optimization">Battery optimization: %1$s</string>
     <string name="label_enabled">Enabled</string>
     <string name="label_disabled">Disabled</string>
     <string name="label_unknown">Unknown</string>
@@ -97,6 +99,7 @@
     <string name="hint_routine_alarm_management">Select a routine group below to keep this alarm there or move it to another group.</string>
     <string name="hint_create_routine_group_first">Create a routine group first or switch this alarm back to Standard.</string>
     <string name="hint_holiday_aware_workdays">When enabled, this alarm follows the official workday calendar instead of a plain Monday-to-Friday loop.</string>
+    <string name="hint_battery_optimization">If your phone clears this app from recent tasks, system battery restrictions may stop alarms from ringing in the background.</string>
 
     <string name="status_saving">Saving...</string>
     <string name="status_syncing">Syncing...</string>
