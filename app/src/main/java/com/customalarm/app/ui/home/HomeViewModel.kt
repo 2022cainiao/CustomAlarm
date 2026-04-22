@@ -30,6 +30,7 @@ data class UpcomingAlarmSummary(
     val minute: Int,
     val label: String,
     val repeatDays: List<Int>,
+    val holidayAwareWorkdays: Boolean,
     val nextTriggerAt: Long,
     val isRoutineAlarm: Boolean,
     val routineGroupName: String? = null
@@ -107,6 +108,7 @@ class HomeViewModel(
                                 minute = alarm.minute,
                                 label = alarm.label,
                                 repeatDays = alarm.repeatDays,
+                                holidayAwareWorkdays = alarm.holidayAwareWorkdays,
                                 nextTriggerAt = requireNotNull(alarm.nextTriggerAt),
                                 isRoutineAlarm = true,
                                 routineGroupName = groupWithAlarms.group.name
@@ -122,6 +124,7 @@ class HomeViewModel(
                             minute = alarm.minute,
                             label = alarm.label,
                             repeatDays = alarm.repeatDays,
+                            holidayAwareWorkdays = alarm.holidayAwareWorkdays,
                             nextTriggerAt = requireNotNull(alarm.nextTriggerAt),
                             isRoutineAlarm = false
                         )

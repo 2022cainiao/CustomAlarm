@@ -25,6 +25,7 @@ data class AlarmEntity(
     val hour: Int = 7,
     val minute: Int = 0,
     val repeatDays: List<Int> = emptyList(),
+    val holidayAwareWorkdays: Boolean = false,
     val label: String = "",
     val ringtoneUri: String? = null,
     val vibrate: Boolean = true,
@@ -33,4 +34,3 @@ data class AlarmEntity(
     val enabled: Boolean = true,
     val nextTriggerAt: Long? = null
 )
-

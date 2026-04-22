@@ -1,5 +1,7 @@
 package com.customalarm.app.ui.alarm
 
+import android.content.Intent
+import android.media.RingtoneManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,6 +49,11 @@ fun AlarmEditorScreen(
 ) {
     val state = viewModel.uiState
     val context = LocalContext.current
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.updateRingtone(extractPickedRingtoneUri(result.data)?.toString())
+    }
     val ringtoneLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -208,11 +215,24 @@ fun AlarmEditorScreen(
                         ).forEach { (day, labelRes) ->
                             FilterChip(
                                 selected = day in state.repeatDays,
+                                enabled = !state.holidayAwareWorkdays,
                                 onClick = { viewModel.toggleRepeatDay(day) },
                                 label = { Text(stringResource(labelRes)) }
                             )
                         }
                     }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.label_holiday_aware_workdays), modifier = Modifier.weight(1f))
+                        Switch(
+                            checked = state.holidayAwareWorkdays,
+                            onCheckedChange = viewModel::updateHolidayAwareWorkdays
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.hint_holiday_aware_workdays),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -249,12 +269,32 @@ fun AlarmEditorScreen(
                     Text(
                         stringResource(
                             R.string.label_ringtone,
-                            state.ringtoneUri ?: stringResource(R.string.label_system_default)
+                            resolveRingtoneLabel(context, state.ringtoneUri)
                         )
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                ringtonePickerLauncher.launch(
+                                    Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                        putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                                        putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                        putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                                        putExtra(
+                                            RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                                            state.ringtoneUri?.let(Uri::parse)
+                                        )
+                                    }
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.action_choose_ringtone))
+                        }
                         OutlinedButton(onClick = { ringtoneLauncher.launch(arrayOf("audio/*")) }) {
-                            Text(stringResource(R.string.action_choose))
+                            Text(stringResource(R.string.action_choose_audio_file))
                         }
                         OutlinedButton(onClick = { viewModel.updateRingtone(null) }) {
                             Text(stringResource(R.string.action_use_default))
@@ -282,5 +322,26 @@ fun AlarmEditorScreen(
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+private fun resolveRingtoneLabel(context: android.content.Context, ringtoneUri: String?): String {
+    if (ringtoneUri.isNullOrBlank()) {
+        return context.getString(R.string.label_system_default)
+    }
+
+    val uri = Uri.parse(ringtoneUri)
+    return RingtoneManager.getRingtone(context, uri)?.getTitle(context)
+        ?: uri.lastPathSegment
+        ?: context.getString(R.string.label_system_default)
+}
+
+private fun extractPickedRingtoneUri(data: Intent?): Uri? {
+    if (data == null) return null
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
     }
 }

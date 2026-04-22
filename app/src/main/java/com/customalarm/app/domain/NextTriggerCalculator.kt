@@ -6,17 +6,21 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class NextTriggerCalculator(
+    private val holidayCalendar: HolidayCalendar = HolidayCalendar(),
     private val zoneId: ZoneId = ZoneId.systemDefault()
 ) {
     fun calculateNextTrigger(
         hour: Int,
         minute: Int,
         repeatDays: List<Int>,
+        holidayAwareWorkdays: Boolean = false,
         fromMillis: Long = System.currentTimeMillis()
     ): Long {
         val from = Instant.ofEpochMilli(fromMillis).atZone(zoneId)
         return if (repeatDays.isEmpty()) {
             calculateOneTime(hour = hour, minute = minute, from = from)
+        } else if (holidayAwareWorkdays) {
+            calculateHolidayAwareWorkdays(hour = hour, minute = minute, from = from)
         } else {
             calculateRepeating(hour = hour, minute = minute, repeatDays = repeatDays, from = from)
         }
@@ -45,6 +49,24 @@ class NextTriggerCalculator(
                 .withNano(0)
             val dayValue = candidate.dayOfWeek.toLegacyValue()
             if (dayValue in allowedDays && candidate.isAfter(from)) {
+                return candidate.toInstant().toEpochMilli()
+            }
+        }
+        return calculateOneTime(hour = hour, minute = minute, from = from)
+    }
+
+    private fun calculateHolidayAwareWorkdays(
+        hour: Int,
+        minute: Int,
+        from: ZonedDateTime
+    ): Long {
+        for (offset in 0..370) {
+            val candidate = from.plusDays(offset.toLong())
+                .withHour(hour)
+                .withMinute(minute)
+                .withSecond(0)
+                .withNano(0)
+            if (holidayCalendar.isOfficialWorkday(candidate.toLocalDate()) && candidate.isAfter(from)) {
                 return candidate.toInstant().toEpochMilli()
             }
         }

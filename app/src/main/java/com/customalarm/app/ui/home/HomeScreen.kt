@@ -365,7 +365,7 @@ private fun UpcomingAlarmCard(
                     stringResource(R.string.label_source_standard_alarm)
                 }
             )
-            Text(formatRepeatDays(context, alarm.repeatDays))
+            Text(formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays))
             Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
         }
     }
@@ -396,7 +396,7 @@ private fun AlarmCard(
                 }
                 Switch(checked = alarm.enabled, onCheckedChange = onToggle)
             }
-            Text(formatRepeatDays(context, alarm.repeatDays))
+            Text(formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays))
             Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }

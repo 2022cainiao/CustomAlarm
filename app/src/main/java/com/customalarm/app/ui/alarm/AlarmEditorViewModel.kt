@@ -24,6 +24,7 @@ data class AlarmEditorUiState(
     val hour: String = "07",
     val minute: String = "00",
     val repeatDays: Set<Int> = emptySet(),
+    val holidayAwareWorkdays: Boolean = false,
     val label: String = "",
     val ringtoneUri: String? = null,
     val vibrate: Boolean = true,
@@ -65,6 +66,7 @@ class AlarmEditorViewModel(
                     hour = existing.hour.toString().padStart(2, '0'),
                     minute = existing.minute.toString().padStart(2, '0'),
                     repeatDays = existing.repeatDays.toSet(),
+                    holidayAwareWorkdays = existing.holidayAwareWorkdays,
                     label = existing.label,
                     ringtoneUri = existing.ringtoneUri,
                     vibrate = existing.vibrate,
@@ -112,7 +114,19 @@ class AlarmEditorViewModel(
         val updated = uiState.repeatDays.toMutableSet().apply {
             if (contains(day)) remove(day) else add(day)
         }
-        uiState = uiState.copy(repeatDays = updated, errorMessageRes = null)
+        uiState = uiState.copy(
+            repeatDays = updated,
+            holidayAwareWorkdays = uiState.holidayAwareWorkdays && updated == WORKDAY_SET,
+            errorMessageRes = null
+        )
+    }
+
+    fun updateHolidayAwareWorkdays(enabled: Boolean) {
+        uiState = uiState.copy(
+            repeatDays = if (enabled) WORKDAY_SET else uiState.repeatDays,
+            holidayAwareWorkdays = enabled,
+            errorMessageRes = null
+        )
     }
 
     fun updateVibrate(enabled: Boolean) {
@@ -159,6 +173,7 @@ class AlarmEditorViewModel(
                     hour = hour,
                     minute = minute,
                     repeatDays = uiState.repeatDays.sorted(),
+                    holidayAwareWorkdays = uiState.holidayAwareWorkdays,
                     label = uiState.label,
                     ringtoneUri = uiState.ringtoneUri,
                     vibrate = uiState.vibrate,
@@ -175,6 +190,8 @@ class AlarmEditorViewModel(
     }
 
     companion object {
+        private val WORKDAY_SET = setOf(1, 2, 3, 4, 5)
+
         fun factory(
             container: AppContainer,
             alarmId: Long?,

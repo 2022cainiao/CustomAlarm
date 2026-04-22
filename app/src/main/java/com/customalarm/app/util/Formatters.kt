@@ -11,8 +11,13 @@ private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
 
 fun formatAlarmTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour, minute)
 
-fun formatRepeatDays(context: Context, days: List<Int>): String {
+fun formatRepeatDays(
+    context: Context,
+    days: List<Int>,
+    holidayAwareWorkdays: Boolean = false
+): String {
     if (days.isEmpty()) return context.getString(R.string.repeat_one_time)
+    if (holidayAwareWorkdays) return context.getString(R.string.repeat_official_workdays)
 
     val sorted = days.sorted()
     val weekDayMap = mapOf(

@@ -53,7 +53,8 @@ class AlarmRepository(
                 nextTriggerAt = nextTriggerCalculator.calculateNextTrigger(
                     hour = current.hour,
                     minute = current.minute,
-                    repeatDays = current.repeatDays
+                    repeatDays = current.repeatDays,
+                    holidayAwareWorkdays = current.holidayAwareWorkdays
                 )
             )
         }
@@ -72,9 +73,9 @@ class AlarmRepository(
             nextTriggerAt = nextTriggerCalculator.calculateNextTrigger(
                 hour = hour,
                 minute = minute,
-                repeatDays = repeatDays
+                repeatDays = repeatDays,
+                holidayAwareWorkdays = holidayAwareWorkdays
             )
         )
     }
 }
-
