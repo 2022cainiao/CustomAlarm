@@ -16,12 +16,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
@@ -68,7 +71,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var moveAlarmId by remember { mutableStateOf<Long?>(null) }
-    var languageDialogVisible by remember { mutableStateOf(false) }
+    var languageMenuExpanded by remember { mutableStateOf(false) }
 
     if (moveAlarmId != null) {
         MoveToRoutineGroupDialog(
@@ -81,19 +84,23 @@ fun HomeScreen(
         )
     }
 
-    if (languageDialogVisible) {
-        AppLanguageDialog(
-            selectedLanguage = uiState.appLanguage,
-            onDismiss = { languageDialogVisible = false },
-            onSelectLanguage = { language ->
-                viewModel.setAppLanguage(language)
-                languageDialogVisible = false
-            }
-        )
-    }
-
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.screen_home_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.screen_home_title)) },
+                actions = {
+                    LanguageMenuButton(
+                        selectedLanguage = uiState.appLanguage,
+                        expanded = languageMenuExpanded,
+                        onExpandChange = { languageMenuExpanded = it },
+                        onSelectLanguage = { language ->
+                            viewModel.setAppLanguage(language)
+                            languageMenuExpanded = false
+                        }
+                    )
+                }
+            )
+        },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(onClick = onAddRoutineGroup) {
@@ -120,13 +127,6 @@ fun HomeScreen(
                     notificationsEnabled = notificationsEnabled,
                     onRequestExactAlarmPermission = onRequestExactAlarmPermission,
                     onRequestNotificationPermission = onRequestNotificationPermission
-                )
-            }
-
-            item {
-                AppLanguageCard(
-                    appLanguage = uiState.appLanguage,
-                    onChangeLanguage = { languageDialogVisible = true }
                 )
             }
 
@@ -230,72 +230,39 @@ fun HomeScreen(
 }
 
 @Composable
-private fun AppLanguageCard(
-    appLanguage: AppLanguage,
-    onChangeLanguage: () -> Unit
+private fun LanguageMenuButton(
+    selectedLanguage: AppLanguage,
+    expanded: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onSelectLanguage: (AppLanguage) -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+    Column {
+        IconButton(
+            onClick = { onExpandChange(!expanded) }
         ) {
-            Text(
-                text = stringResource(R.string.label_app_language),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+            Icon(
+                imageVector = Icons.Filled.Language,
+                contentDescription = stringResource(R.string.action_change_language)
             )
-            Text(
-                text = stringResource(
-                    R.string.label_current_language,
-                    languageLabel(appLanguage)
-                )
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onChangeLanguage) {
-                    Text(stringResource(R.string.action_change_language))
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onExpandChange(false) }
+        ) {
+            AppLanguage.entries.forEach { language ->
+                val label = languageLabel(language)
+                val finalText = if (language == selectedLanguage) {
+                    stringResource(R.string.label_selected_language, label)
+                } else {
+                    label
                 }
+                DropdownMenuItem(
+                    text = { Text(finalText) },
+                    onClick = { onSelectLanguage(language) }
+                )
             }
         }
     }
-}
-
-@Composable
-private fun AppLanguageDialog(
-    selectedLanguage: AppLanguage,
-    onDismiss: () -> Unit,
-    onSelectLanguage: (AppLanguage) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.label_app_language)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AppLanguage.entries.forEach { language ->
-                    OutlinedButton(
-                        onClick = { onSelectLanguage(language) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val label = languageLabel(language)
-                        val finalText = if (language == selectedLanguage) {
-                            stringResource(R.string.label_selected_language, label)
-                        } else {
-                            label
-                        }
-                        Text(finalText)
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.status_cancel))
-            }
-        }
-    )
 }
 
 @Composable
