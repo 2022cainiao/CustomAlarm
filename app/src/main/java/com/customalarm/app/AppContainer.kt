@@ -9,9 +9,9 @@ import com.customalarm.app.data.repository.AlarmRepository
 import com.customalarm.app.data.repository.AppSettingsRepository
 import com.customalarm.app.data.repository.RoutineGroupRepository
 import com.customalarm.app.domain.AlarmCoordinator
-import com.customalarm.app.domain.HolidayCalendar
 import com.customalarm.app.domain.AlarmRingingController
 import com.customalarm.app.domain.AlarmScheduler
+import com.customalarm.app.domain.HolidayCalendarStore
 import com.customalarm.app.domain.NextTriggerCalculator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +27,10 @@ class AppContainer(context: Context) {
         .build()
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val holidayCalendar = HolidayCalendar()
-    val nextTriggerCalculator = NextTriggerCalculator(holidayCalendar = holidayCalendar)
+    val holidayCalendarStore = HolidayCalendarStore(applicationContext)
+    val nextTriggerCalculator = NextTriggerCalculator(
+        holidayCalendarProvider = holidayCalendarStore::currentCalendar
+    )
     val alarmRepository = AlarmRepository(database.alarmDao(), nextTriggerCalculator)
     val routineGroupRepository = RoutineGroupRepository(database.routineGroupDao())
     val appSettingsRepository = AppSettingsRepository(applicationContext)

@@ -1,9 +1,16 @@
 package com.customalarm.app.domain
 
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-class HolidayCalendar {
+data class HolidayCalendar(
+    private val holidayDates: Set<LocalDate> = emptySet(),
+    private val makeupWorkdays: Set<LocalDate> = emptySet()
+) {
     fun isHoliday(date: LocalDate): Boolean = holidayDates.contains(date)
 
     fun isMakeupWorkday(date: LocalDate): Boolean = makeupWorkdays.contains(date)
@@ -11,7 +18,21 @@ class HolidayCalendar {
     fun isOfficialWorkday(date: LocalDate): Boolean {
         if (isMakeupWorkday(date)) return true
         if (isHoliday(date)) return false
-        return date.dayOfWeek in setOf(
+        return date.dayOfWeek in STANDARD_WORKDAYS
+    }
+
+    companion object {
+        fun empty(): HolidayCalendar = HolidayCalendar()
+
+        fun fromJson(json: String): HolidayCalendar {
+            val root = JSONObject(json)
+            return HolidayCalendar(
+                holidayDates = root.optJSONArray("holidays").toLocalDateSet(),
+                makeupWorkdays = root.optJSONArray("makeupWorkdays").toLocalDateSet()
+            )
+        }
+
+        private val STANDARD_WORKDAYS = setOf(
             DayOfWeek.MONDAY,
             DayOfWeek.TUESDAY,
             DayOfWeek.WEDNESDAY,
@@ -21,49 +42,60 @@ class HolidayCalendar {
     }
 }
 
-private val holidayDates: Set<LocalDate> = buildSet {
-    // Official PRC public holiday dates currently embedded for 2025 and 2026.
-    addRange(2025, 1, 1, 1, 1)
-    addRange(2025, 1, 28, 2, 4)
-    addRange(2025, 4, 4, 4, 6)
-    addRange(2025, 5, 1, 5, 5)
-    addRange(2025, 5, 31, 6, 2)
-    addRange(2025, 10, 1, 10, 8)
+class HolidayCalendarStore(
+    private val context: Context
+) {
+    @Volatile
+    private var currentCalendar: HolidayCalendar = loadInitialCalendar()
 
-    addRange(2026, 1, 1, 1, 3)
-    addRange(2026, 2, 15, 2, 23)
-    addRange(2026, 4, 4, 4, 6)
-    addRange(2026, 5, 1, 5, 5)
-    addRange(2026, 6, 19, 6, 21)
-    addRange(2026, 9, 25, 9, 27)
-    addRange(2026, 10, 1, 10, 7)
+    fun currentCalendar(): HolidayCalendar = currentCalendar
+
+    fun updateFromJson(json: String): Boolean {
+        val parsed = runCatching { HolidayCalendar.fromJson(json) }.getOrNull() ?: return false
+        runCatching { cacheFile().writeText(json) }.getOrNull() ?: return false
+        currentCalendar = parsed
+        return true
+    }
+
+    fun resetToBundledCalendar(): HolidayCalendar {
+        cacheFile().delete()
+        return loadBundledCalendar().also { currentCalendar = it }
+    }
+
+    private fun loadInitialCalendar(): HolidayCalendar {
+        return loadCachedCalendar() ?: loadBundledCalendar()
+    }
+
+    private fun loadCachedCalendar(): HolidayCalendar? {
+        val file = cacheFile()
+        if (!file.exists()) return null
+        return runCatching { HolidayCalendar.fromJson(file.readText()) }.getOrNull()
+    }
+
+    private fun loadBundledCalendar(): HolidayCalendar {
+        return runCatching {
+            context.assets.open(BUNDLED_ASSET_NAME).bufferedReader().use { reader ->
+                HolidayCalendar.fromJson(reader.readText())
+            }
+        }.getOrElse { HolidayCalendar.empty() }
+    }
+
+    private fun cacheFile(): File = File(context.filesDir, CACHE_FILE_NAME)
+
+    private companion object {
+        const val BUNDLED_ASSET_NAME = "holiday_calendar.json"
+        const val CACHE_FILE_NAME = "holiday_calendar_cache.json"
+    }
 }
 
-private val makeupWorkdays: Set<LocalDate> = setOf(
-    LocalDate.of(2025, 1, 26),
-    LocalDate.of(2025, 2, 8),
-    LocalDate.of(2025, 4, 27),
-    LocalDate.of(2025, 9, 28),
-    LocalDate.of(2025, 10, 11),
-    LocalDate.of(2026, 1, 4),
-    LocalDate.of(2026, 2, 14),
-    LocalDate.of(2026, 2, 28),
-    LocalDate.of(2026, 5, 9),
-    LocalDate.of(2026, 9, 20),
-    LocalDate.of(2026, 10, 10)
-)
-
-private fun MutableSet<LocalDate>.addRange(
-    startYear: Int,
-    startMonth: Int,
-    startDay: Int,
-    endMonth: Int,
-    endDay: Int
-) {
-    var cursor = LocalDate.of(startYear, startMonth, startDay)
-    val end = LocalDate.of(startYear, endMonth, endDay)
-    while (!cursor.isAfter(end)) {
-        add(cursor)
-        cursor = cursor.plusDays(1)
+private fun JSONArray?.toLocalDateSet(): Set<LocalDate> {
+    if (this == null) return emptySet()
+    val result = mutableSetOf<LocalDate>()
+    for (index in 0 until length()) {
+        val raw = optString(index).trim()
+        if (raw.isNotEmpty()) {
+            result += LocalDate.parse(raw)
+        }
     }
+    return result
 }

@@ -6,7 +6,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class NextTriggerCalculator(
-    private val holidayCalendar: HolidayCalendar = HolidayCalendar(),
+    private val holidayCalendarProvider: () -> HolidayCalendar = { HolidayCalendar.empty() },
     private val zoneId: ZoneId = ZoneId.systemDefault()
 ) {
     fun calculateNextTrigger(
@@ -66,7 +66,7 @@ class NextTriggerCalculator(
                 .withMinute(minute)
                 .withSecond(0)
                 .withNano(0)
-            if (holidayCalendar.isOfficialWorkday(candidate.toLocalDate()) && candidate.isAfter(from)) {
+            if (holidayCalendarProvider().isOfficialWorkday(candidate.toLocalDate()) && candidate.isAfter(from)) {
                 return candidate.toInstant().toEpochMilli()
             }
         }
