@@ -67,6 +67,7 @@
     <string name="label_enable_after_saving">Enable after saving</string>
     <string name="label_ringtone">Ringtone: %1$s</string>
     <string name="label_system_default">System default</string>
+    <string name="label_custom_ringtone">Custom ringtone</string>
     <string name="label_next_ring">Next ring: %1$s</string>
     <string name="label_active_of_total">%1$d active of %2$d | %3$s</string>
     <string name="label_source_standard_alarm">Standard alarm</string>

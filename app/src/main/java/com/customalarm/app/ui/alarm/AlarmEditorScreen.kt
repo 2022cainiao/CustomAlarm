@@ -48,10 +48,11 @@ fun AlarmEditorScreen(
 ) {
     val state = viewModel.uiState
     val context = LocalContext.current
+    val usingDefaultRingtone = state.ringtoneUri.isNullOrBlank()
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        viewModel.updateRingtone(extractPickedRingtoneUri(result.data)?.toString())
+        viewModel.updateRingtone(normalizeRingtoneUri(context, extractPickedRingtoneUri(result.data)))
     }
     val ringtoneLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -64,7 +65,7 @@ fun AlarmEditorScreen(
                 )
             }
         }
-        viewModel.updateRingtone(uri?.toString())
+        viewModel.updateRingtone(normalizeRingtoneUri(context, uri))
     }
 
     LaunchedEffect(state.saved) {
@@ -271,7 +272,12 @@ fun AlarmEditorScreen(
                         stringResource(
                             R.string.label_ringtone,
                             resolveRingtoneLabel(context, state.ringtoneUri)
-                        )
+                        ),
+                        color = if (usingDefaultRingtone) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
                     )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -297,7 +303,10 @@ fun AlarmEditorScreen(
                         OutlinedButton(onClick = { ringtoneLauncher.launch(arrayOf("audio/*")) }) {
                             Text(stringResource(R.string.action_choose_audio_file))
                         }
-                        OutlinedButton(onClick = { viewModel.updateRingtone(null) }) {
+                        OutlinedButton(
+                            onClick = { viewModel.updateRingtone(null) },
+                            enabled = !usingDefaultRingtone
+                        ) {
                             Text(stringResource(R.string.action_use_default))
                         }
                     }
@@ -331,14 +340,22 @@ private fun resolveRingtoneLabel(context: android.content.Context, ringtoneUri: 
         return context.getString(R.string.label_system_default)
     }
 
+    val uri = runCatching { Uri.parse(ringtoneUri) }.getOrNull()
+        ?: return context.getString(R.string.label_custom_ringtone)
+
     return runCatching {
-        val uri = Uri.parse(ringtoneUri)
         RingtoneManager.getRingtone(context, uri)?.getTitle(context)
             ?: uri.lastPathSegment
-            ?: context.getString(R.string.label_system_default)
+            ?: context.getString(R.string.label_custom_ringtone)
     }.getOrElse {
-        context.getString(R.string.label_system_default)
+        uri.lastPathSegment ?: context.getString(R.string.label_custom_ringtone)
     }
+}
+
+private fun normalizeRingtoneUri(context: android.content.Context, uri: Uri?): String? {
+    if (uri == null) return null
+    val defaultAlarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+    return if (uri == defaultAlarmUri) null else uri.toString()
 }
 
 private fun extractPickedRingtoneUri(data: Intent?): Uri? {
