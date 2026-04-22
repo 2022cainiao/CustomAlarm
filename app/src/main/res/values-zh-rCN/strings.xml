@@ -21,7 +21,7 @@
     <string name="action_enable_notifications">&#x5F00;&#x542F;&#x901A;&#x77E5;&#x6743;&#x9650;</string>
     <string name="action_disable_battery_optimization">&#x5141;&#x8BB8;&#x540E;&#x53F0;&#x95F9;&#x949F;</string>
     <string name="action_change_language">&#x5207;&#x6362;&#x8BED;&#x8A00;</string>
-    <string name="action_sync_holiday_calendar">&#x540C;&#x6B65;&#x8282;&#x5047;&#x65E5;&#x6570;&#x636E;</string>
+    <string name="action_sync_holiday_calendar">&#x5237;&#x65B0;</string>
     <string name="action_dismiss">&#x5173;&#x95ED;</string>
     <string name="action_save_alarm">&#x4FDD;&#x5B58;&#x95F9;&#x949F;</string>
     <string name="action_save_routine_group">&#x4FDD;&#x5B58;&#x4F5C;&#x606F;&#x7EC4;</string>
@@ -33,9 +33,10 @@
     <string name="label_selected_language">%1$s&#xFF08;&#x5DF2;&#x9009;&#xFF09;</string>
     <string name="label_holiday_calendar">&#x8282;&#x5047;&#x65E5;&#x6570;&#x636E;</string>
     <string name="label_holiday_coverage">&#x6570;&#x636E;&#x8986;&#x76D6;&#x5230;&#xFF1A;%1$s</string>
+    <string name="label_holiday_coverage_short">&#x8986;&#x76D6;&#x5230;&#xFF1A;%1$s</string>
     <string name="label_holiday_source">&#x5F53;&#x524D;&#x6765;&#x6E90;&#xFF1A;%1$s</string>
     <string name="label_holiday_last_sync">&#x4E0A;&#x6B21;&#x540C;&#x6B65;&#xFF1A;%1$s</string>
-    <string name="label_holiday_sync_failed_using_local">&#x516C;&#x5171;&#x6E90;&#x540C;&#x6B65;&#x5931;&#x8D25;&#xFF0C;&#x5F53;&#x524D;&#x7EE7;&#x7EED;&#x4F7F;&#x7528;&#x672C;&#x5730;&#x6570;&#x636E;&#x3002;</string>
+    <string name="label_holiday_sync_failed_using_local">&#x670D;&#x52A1;&#x5668;&#x540C;&#x6B65;&#x5931;&#x8D25;&#xFF0C;&#x5F53;&#x524D;&#x7EE7;&#x7EED;&#x4F7F;&#x7528;&#x672C;&#x5730;&#x6570;&#x636E;&#x3002;</string>
     <string name="label_exact_alarms">&#x7CBE;&#x786E;&#x95F9;&#x949F;&#xFF1A;%1$s</string>
     <string name="label_notifications">&#x901A;&#x77E5;&#xFF1A;%1$s</string>
     <string name="label_battery_optimization">&#x7535;&#x6C60;&#x4F18;&#x5316;&#xFF1A;%1$s</string>
@@ -113,7 +114,7 @@
     <string name="error_enter_routine_name">&#x8BF7;&#x8F93;&#x5165;&#x4F5C;&#x606F;&#x7EC4;&#x540D;&#x79F0;&#x3002;</string>
     <string name="error_save_alarm_failed">&#x5F53;&#x524D;&#x65E0;&#x6CD5;&#x4FDD;&#x5B58;&#x95F9;&#x949F;&#xFF0C;&#x8BF7;&#x7A0D;&#x540E;&#x91CD;&#x8BD5;&#x3002;</string>
     <string name="error_save_routine_group_failed">&#x5F53;&#x524D;&#x65E0;&#x6CD5;&#x4FDD;&#x5B58;&#x4F5C;&#x606F;&#x7EC4;&#xFF0C;&#x8BF7;&#x7A0D;&#x540E;&#x91CD;&#x8BD5;&#x3002;</string>
-    <string name="warning_holiday_calendar_expired">&#x672C;&#x5730;&#x8282;&#x5047;&#x65E5;&#x6570;&#x636E;&#x5DF2;&#x7ECF;&#x8FC7;&#x671F;&#xFF0C;&#x4E14;&#x516C;&#x5171; JSON &#x6570;&#x636E;&#x6E90;&#x6682;&#x65F6;&#x4E0D;&#x53EF;&#x7528;&#x3002;&#x6CD5;&#x5B9A;&#x5DE5;&#x4F5C;&#x65E5;&#x6A21;&#x5F0F;&#x7684;&#x95F9;&#x949F;&#x5728;&#x540C;&#x6B65;&#x6210;&#x529F;&#x524D;&#x53EF;&#x80FD;&#x4E0D;&#x51C6;&#x786E;&#x3002;</string>
+    <string name="warning_holiday_calendar_expired">&#x672C;&#x5730;&#x8282;&#x5047;&#x65E5;&#x6570;&#x636E;&#x5DF2;&#x7ECF;&#x8FC7;&#x671F;&#xFF0C;&#x4E14;&#x8282;&#x5047;&#x65E5;&#x670D;&#x52A1;&#x5668;&#x6682;&#x65F6;&#x4E0D;&#x53EF;&#x7528;&#x3002;&#x6CD5;&#x5B9A;&#x5DE5;&#x4F5C;&#x65E5;&#x6A21;&#x5F0F;&#x7684;&#x95F9;&#x949F;&#x5728;&#x540C;&#x6B65;&#x6210;&#x529F;&#x524D;&#x53EF;&#x80FD;&#x4E0D;&#x51C6;&#x786E;&#x3002;</string>
 
     <string name="alarm_channel_name">&#x95F9;&#x949F;&#x63D0;&#x9192;</string>
     <string name="alarm_channel_description">&#x95F9;&#x949F;&#x54CD;&#x94C3;&#x901A;&#x77E5;</string>

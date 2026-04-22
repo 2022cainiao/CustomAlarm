@@ -287,49 +287,27 @@ private fun HolidayCalendarCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(
-                text = stringResource(R.string.label_holiday_calendar),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(
-                    R.string.label_holiday_coverage,
-                    formatLocalDate(holidayCalendar.coverageEnd)
-                )
-            )
-            Text(
-                text = stringResource(
-                    R.string.label_holiday_source,
-                    holidayCalendar.sourceName ?: stringResource(R.string.label_unknown)
-                )
-            )
-            Text(
-                text = stringResource(
-                    R.string.label_holiday_last_sync,
-                    formatInstantOrDash(holidayCalendar.syncedAt)
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (holidayCalendar.shouldWarnSourceUnavailable) {
-                Text(
-                    text = stringResource(R.string.warning_holiday_calendar_expired),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else if (!holidayCalendar.lastErrorMessage.isNullOrBlank() && holidayCalendar.isExpired.not()) {
-                Text(
-                    text = stringResource(R.string.label_holiday_sync_failed_using_local),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.label_holiday_calendar),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.label_holiday_coverage_short,
+                            formatLocalDate(holidayCalendar.coverageEnd)
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 TextButton(
                     onClick = onSyncHolidayCalendar,
                     enabled = !holidayCalendar.isSyncing
@@ -344,6 +322,35 @@ private fun HolidayCalendarCard(
                         )
                     )
                 }
+            }
+            Text(
+                text = stringResource(
+                    R.string.label_holiday_source,
+                    holidayCalendar.sourceName ?: stringResource(R.string.label_unknown)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(
+                    R.string.label_holiday_last_sync,
+                    formatInstantOrDash(holidayCalendar.syncedAt)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (holidayCalendar.shouldWarnSourceUnavailable) {
+                Text(
+                    text = stringResource(R.string.warning_holiday_calendar_expired),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else if (!holidayCalendar.lastErrorMessage.isNullOrBlank() && holidayCalendar.isExpired.not()) {
+                Text(
+                    text = stringResource(R.string.label_holiday_sync_failed_using_local),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }

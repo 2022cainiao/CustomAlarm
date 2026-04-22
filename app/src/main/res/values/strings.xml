@@ -21,7 +21,7 @@
     <string name="action_enable_notifications">Enable notifications</string>
     <string name="action_disable_battery_optimization">Allow background alarms</string>
     <string name="action_change_language">Change language</string>
-    <string name="action_sync_holiday_calendar">Sync holiday calendar</string>
+    <string name="action_sync_holiday_calendar">Refresh</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_save_alarm">Save alarm</string>
     <string name="action_save_routine_group">Save routine group</string>
@@ -33,9 +33,10 @@
     <string name="label_selected_language">%1$s (Selected)</string>
     <string name="label_holiday_calendar">Holiday calendar</string>
     <string name="label_holiday_coverage">Data covers through: %1$s</string>
+    <string name="label_holiday_coverage_short">Coverage: %1$s</string>
     <string name="label_holiday_source">Current source: %1$s</string>
     <string name="label_holiday_last_sync">Last sync: %1$s</string>
-    <string name="label_holiday_sync_failed_using_local">Public sync failed. Using local data for now.</string>
+    <string name="label_holiday_sync_failed_using_local">Server sync failed. Using local data for now.</string>
     <string name="label_exact_alarms">Exact alarms: %1$s</string>
     <string name="label_notifications">Notifications: %1$s</string>
     <string name="label_battery_optimization">Battery optimization: %1$s</string>
@@ -113,7 +114,7 @@
     <string name="error_enter_routine_name">Enter a routine group name.</string>
     <string name="error_save_alarm_failed">Could not save this alarm right now. Please try again.</string>
     <string name="error_save_routine_group_failed">Could not save this routine group right now. Please try again.</string>
-    <string name="warning_holiday_calendar_expired">Local holiday data has expired and public JSON sync is currently unavailable. Official workday alarms may be inaccurate until sync succeeds.</string>
+    <string name="warning_holiday_calendar_expired">Local holiday data has expired and the holiday server is currently unavailable. Official workday alarms may be inaccurate until sync succeeds.</string>
 
     <string name="alarm_channel_name">Alarm alerts</string>
     <string name="alarm_channel_description">Notifications for ringing alarms</string>

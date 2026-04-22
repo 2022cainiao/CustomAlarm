@@ -41,7 +41,7 @@ class HolidayCalendarSyncRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val todayProvider: () -> LocalDate = { LocalDate.now() },
     private val nowProvider: () -> Instant = { Instant.now() },
-    private val remoteSources: List<HolidayCalendarRemoteSource> = DEFAULT_REMOTE_SOURCES
+    private val remoteSources: List<HolidayCalendarRemoteSource> = emptyList()
 ) {
     private val _status = MutableStateFlow(buildStatus())
     val status: StateFlow<HolidayCalendarSyncStatus> = _status.asStateFlow()
@@ -128,7 +128,7 @@ class HolidayCalendarSyncRepository(
     }
 
     private suspend fun fetchRemoteCalendar(): RemoteFetchResult = withContext(ioDispatcher) {
-        var lastError = "No holiday data source is configured."
+        var lastError = "Holiday server endpoint is not configured."
         for (source in remoteSources) {
             val responseResult = runCatching { download(source.url) }
             if (responseResult.isFailure) {
@@ -197,18 +197,5 @@ class HolidayCalendarSyncRepository(
         ) : RemoteFetchResult
 
         data class Failure(val message: String) : RemoteFetchResult
-    }
-
-    private companion object {
-        val DEFAULT_REMOTE_SOURCES = listOf(
-            HolidayCalendarRemoteSource(
-                name = "jsDelivr holiday JSON",
-                url = "https://cdn.jsdelivr.net/gh/lanceliao/china-holiday-calender/holidayAPI.json"
-            ),
-            HolidayCalendarRemoteSource(
-                name = "GitHub raw holiday JSON",
-                url = "https://raw.githubusercontent.com/lanceliao/china-holiday-calender/master/holidayAPI.json"
-            )
-        )
     }
 }
