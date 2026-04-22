@@ -71,6 +71,12 @@ class HomeViewModel(
         }
     }
 
+    fun moveAlarmToRoutineGroup(alarmId: Long, groupId: Long) {
+        viewModelScope.launch {
+            coordinator.moveAlarmToRoutineGroup(alarmId, groupId)
+        }
+    }
+
     companion object {
         fun factory(container: AppContainer): ViewModelProvider.Factory {
             val state = combine(

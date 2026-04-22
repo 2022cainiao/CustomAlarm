@@ -8,15 +8,21 @@ import com.customalarm.app.data.model.AlarmEntity
 import com.customalarm.app.domain.AlarmCoordinator
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+data class RoutineMoveTarget(
+    val groupId: Long,
+    val groupName: String
+)
 
 data class RoutineDetailUiState(
     val groupId: Long = 0L,
     val groupName: String = "",
     val enabled: Boolean = true,
     val alarms: List<AlarmEntity> = emptyList(),
+    val moveTargets: List<RoutineMoveTarget> = emptyList(),
     val exists: Boolean = true
 )
 
@@ -50,6 +56,12 @@ class RoutineDetailViewModel(
         }
     }
 
+    fun moveAlarmToGroup(alarmId: Long, groupId: Long) {
+        viewModelScope.launch {
+            coordinator.moveAlarmToRoutineGroup(alarmId, groupId)
+        }
+    }
+
     fun deleteGroup(onDeleted: () -> Unit) {
         viewModelScope.launch {
             coordinator.deleteRoutineGroup(uiState.value.groupId)
@@ -59,8 +71,10 @@ class RoutineDetailViewModel(
 
     companion object {
         fun factory(container: AppContainer, groupId: Long): ViewModelProvider.Factory {
-            val state = container.routineGroupRepository.observeRoutineGroup(groupId)
-                .map { relation ->
+            val state = combine(
+                container.routineGroupRepository.observeRoutineGroup(groupId),
+                container.routineGroupRepository.observeRoutineGroupsWithAlarms()
+            ) { relation, allGroups ->
                     if (relation == null) {
                         RoutineDetailUiState(exists = false)
                     } else {
@@ -69,6 +83,11 @@ class RoutineDetailViewModel(
                             groupName = relation.group.name,
                             enabled = relation.group.enabled,
                             alarms = relation.alarms.sortedWith(compareBy({ it.hour }, { it.minute }, { it.id })),
+                            moveTargets = allGroups
+                                .map { it.group }
+                                .filter { it.id != relation.group.id }
+                                .sortedBy { it.sortOrder }
+                                .map { RoutineMoveTarget(groupId = it.id, groupName = it.name) },
                             exists = true
                         )
                     }

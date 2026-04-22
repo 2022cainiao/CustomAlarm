@@ -8,7 +8,9 @@
     <string name="action_open_group">Open group</string>
     <string name="action_edit">Edit</string>
     <string name="action_edit_group">Edit group</string>
+    <string name="action_move">Move</string>
     <string name="action_move_to_standard">Move to standard</string>
+    <string name="action_move_to_group">Move to %1$s</string>
     <string name="action_delete">Delete</string>
     <string name="action_delete_group">Delete group</string>
     <string name="action_choose">Choose</string>
@@ -57,6 +59,8 @@
     <string name="label_source_routine_alarm">Routine | %1$s</string>
     <string name="label_routine_master_switch">Routine master switch</string>
     <string name="label_routine_group_name">Routine name</string>
+    <string name="label_move_alarm">Move alarm</string>
+    <string name="label_move_alarm_message">Choose where this alarm should live next.</string>
 
     <string name="screen_home_title">Custom Alarm</string>
     <string name="screen_add_alarm">Add alarm</string>
@@ -70,6 +74,7 @@
     <string name="empty_routine_group_not_found">Routine group not found</string>
     <string name="empty_routine_group_alarms">No alarms in this routine group yet</string>
     <string name="empty_unnamed_alarm">Unnamed alarm</string>
+    <string name="empty_no_other_routine_groups">No other routine groups available</string>
     <string name="hint_standard_alarm_management">Saving as Standard removes this alarm from any routine group.</string>
     <string name="hint_routine_alarm_management">Select a routine group below to keep this alarm there or move it to another group.</string>
     <string name="hint_create_routine_group_first">Create a routine group first or switch this alarm back to Standard.</string>
@@ -77,6 +82,7 @@
     <string name="status_saving">Saving...</string>
     <string name="status_alarm_ringing">Alarm ringing</string>
     <string name="status_open">Open</string>
+    <string name="status_cancel">Cancel</string>
 
     <string name="error_invalid_time">Enter a valid time.</string>
     <string name="error_choose_routine_group">Choose a routine group first.</string>
