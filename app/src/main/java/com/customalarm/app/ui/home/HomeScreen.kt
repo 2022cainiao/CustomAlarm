@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
@@ -724,48 +725,48 @@ private fun RoutineGroupCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = group.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.label_active_of_total,
-                            group.activeCount,
-                            group.alarmCount,
-                            formatNextTrigger(context, group.nextTriggerAt)
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    StatusBadge(
-                        text = stringResource(
-                            if (group.enabled) R.string.label_enabled else R.string.label_disabled
-                        ),
-                        highlighted = group.enabled
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Switch(
-                        checked = group.enabled,
-                        onCheckedChange = onToggle
-                    )
-                }
-            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedButton(onClick = onOpen) {
-                    Text(stringResource(R.string.action_open_group))
-                    Icon(Icons.Filled.ArrowForward, contentDescription = null)
-                }
+                Text(
+                    text = group.name,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Switch(
+                    checked = group.enabled,
+                    onCheckedChange = onToggle
+                )
+            }
+            StatusBadge(
+                text = stringResource(
+                    if (group.enabled) R.string.label_enabled else R.string.label_disabled
+                ),
+                highlighted = group.enabled
+            )
+            Text(
+                text = stringResource(
+                    R.string.label_active_of_total,
+                    group.activeCount,
+                    group.alarmCount,
+                    formatNextTrigger(context, group.nextTriggerAt)
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onOpen
+            ) {
+                Text(stringResource(R.string.action_open_group))
+                Icon(Icons.Filled.ArrowForward, contentDescription = null)
             }
         }
     }
