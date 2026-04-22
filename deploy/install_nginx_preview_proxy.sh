@@ -9,9 +9,18 @@ NGINX_CONF_DIR="${PREVIEW_NGINX_CONF_DIR:-/etc/nginx/conf.d}"
 NGINX_CONF_NAME="${PREVIEW_NGINX_CONF_NAME:-custom_alarm_preview.conf}"
 TARGET_CONF="$NGINX_CONF_DIR/$NGINX_CONF_NAME"
 
+set_output() {
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "$1=$2" >> "$GITHUB_OUTPUT"
+  fi
+}
+
 if ! command -v nginx >/dev/null 2>&1; then
-  echo "[ERROR] nginx not found"
-  exit 1
+  echo "[WARN] nginx not found, skipping preview proxy setup"
+  set_output "nginx_available" "false"
+  set_output "public_port" "$PUBLIC_PORT"
+  set_output "upstream" "$UPSTREAM_HOST:$UPSTREAM_PORT"
+  exit 0
 fi
 
 if ! command -v sudo >/dev/null 2>&1; then
@@ -32,6 +41,10 @@ rm -f "$TMP_CONF"
 
 sudo nginx -t
 sudo systemctl reload nginx
+
+set_output "nginx_available" "true"
+set_output "public_port" "$PUBLIC_PORT"
+set_output "upstream" "$UPSTREAM_HOST:$UPSTREAM_PORT"
 
 echo "NGINX_CONF=$TARGET_CONF"
 echo "PUBLIC_PORT=$PUBLIC_PORT"

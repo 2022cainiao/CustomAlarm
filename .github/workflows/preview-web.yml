@@ -41,6 +41,7 @@ jobs:
           ./deploy/deploy_preview_web.sh
 
       - name: Install nginx preview proxy
+        id: nginx_proxy
         shell: bash
         run: |
           set -euo pipefail
@@ -52,7 +53,11 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsS "http://127.0.0.1:${PREVIEW_WEB_PORT}/" >/dev/null
-          curl -fsS "http://127.0.0.1:${PREVIEW_PUBLIC_PORT}/" >/dev/null
+          if [ "${{ steps.nginx_proxy.outputs.nginx_available }}" = "true" ]; then
+            curl -fsS "http://127.0.0.1:${PREVIEW_PUBLIC_PORT}/" >/dev/null
+          else
+            echo "Skip nginx public-port health check because nginx is not installed on this runner."
+          fi
           echo "Preview web is available on port ${PREVIEW_WEB_PORT}"
 
       - name: Print preview url hint
@@ -60,4 +65,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "Preview web upstream: ${PREVIEW_WEB_HOST}:${PREVIEW_WEB_PORT}"
-          echo "Preview web public nginx port: ${PREVIEW_PUBLIC_PORT}"
+          if [ "${{ steps.nginx_proxy.outputs.nginx_available }}" = "true" ]; then
+            echo "Preview web public nginx port: ${PREVIEW_PUBLIC_PORT}"
+          else
+            echo "Preview nginx proxy was skipped because nginx is not installed on this runner."
+          fi
