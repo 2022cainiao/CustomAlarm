@@ -41,20 +41,32 @@ fun formatRepeatDays(
 
 fun formatNextTrigger(context: Context, triggerAt: Long?): String {
     if (triggerAt == null) return context.getString(R.string.label_disabled)
-    return Instant.ofEpochMilli(triggerAt)
-        .atZone(ZoneId.systemDefault())
-        .format(dateTimeFormatter)
+    return runCatching {
+        Instant.ofEpochMilli(triggerAt)
+            .atZone(ZoneId.systemDefault())
+            .format(dateTimeFormatter)
+    }.getOrElse {
+        "--"
+    }
 }
 
 fun formatRingingClock(timestamp: Long = System.currentTimeMillis()): String {
-    return Instant.ofEpochMilli(timestamp)
-        .atZone(ZoneId.systemDefault())
-        .format(timeFormatter)
+    return runCatching {
+        Instant.ofEpochMilli(timestamp)
+            .atZone(ZoneId.systemDefault())
+            .format(timeFormatter)
+    }.getOrElse {
+        "--:--"
+    }
 }
 
 fun formatLocalDate(date: LocalDate?): String = date?.format(dateFormatter) ?: "--"
 
 fun formatInstantOrDash(timestamp: Instant?): String {
     if (timestamp == null) return "--"
-    return timestamp.atZone(ZoneId.systemDefault()).format(dateTimeFormatter)
+    return runCatching {
+        timestamp.atZone(ZoneId.systemDefault()).format(dateTimeFormatter)
+    }.getOrElse {
+        "--"
+    }
 }

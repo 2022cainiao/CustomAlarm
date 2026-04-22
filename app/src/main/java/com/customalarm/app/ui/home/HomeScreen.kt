@@ -712,9 +712,7 @@ private fun RoutineGroupCard(
 ) {
     val context = LocalContext.current
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onOpen() },
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (group.enabled) {
                 MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
