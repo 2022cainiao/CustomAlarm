@@ -72,12 +72,6 @@ body {
   line-height: 1.6;
 }
 
-.hero-meta {
-  display: grid;
-  gap: 14px;
-}
-
-.meta-card,
 .phone-screen,
 .side-panel,
 .modal-card {
@@ -85,18 +79,6 @@ body {
   background: var(--panel);
   border: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow: var(--shadow);
-}
-
-.meta-card {
-  border-radius: 24px;
-  padding: 18px 20px;
-}
-
-.meta-card span {
-  display: block;
-  color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 6px;
 }
 
 .workspace {
@@ -111,28 +93,18 @@ body {
   top: 20px;
   padding: 18px;
   border-radius: 36px;
-  background: linear-gradient(160deg, rgba(255,255,255,0.48), rgba(255,255,255,0.1));
-  border: 1px solid rgba(255,255,255,0.55);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.1));
+  border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: var(--shadow);
 }
 
-.phone-glow {
-  position: absolute;
-  inset: 24px;
-  border-radius: 30px;
-  background: linear-gradient(180deg, rgba(243, 164, 39, 0.18), rgba(235, 91, 52, 0));
-  pointer-events: none;
-}
-
 .phone-screen {
-  position: relative;
-  z-index: 1;
   min-height: 760px;
   border-radius: 28px;
   padding: 22px 18px 28px;
   background:
     radial-gradient(circle at top right, rgba(243, 164, 39, 0.18), transparent 28%),
-    linear-gradient(180deg, rgba(255,255,255,0.94), rgba(252,248,242,0.96));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(252, 248, 242, 0.96));
 }
 
 .screen-header,
@@ -164,7 +136,9 @@ body {
 .permission-pill,
 .alarm-card,
 .routine-card,
-.detail-alarm-card {
+.detail-alarm-card,
+.move-option,
+.move-empty {
   border-radius: 22px;
   border: 1px solid var(--line);
   background: var(--panel-strong);
@@ -210,7 +184,10 @@ body {
 .form-hint,
 .settings-item p,
 .panel-empty p,
-#detailSummary {
+#detailSummary,
+.modal-copy,
+.move-option span,
+.move-empty {
   color: var(--muted);
   line-height: 1.55;
 }
@@ -218,7 +195,8 @@ body {
 .alarm-actions,
 .routine-actions,
 .detail-actions,
-.modal-actions {
+.modal-actions,
+.move-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -226,7 +204,8 @@ body {
 }
 
 .pill-button,
-.ghost-button {
+.ghost-button,
+.move-option {
   appearance: none;
   border: none;
   cursor: pointer;
@@ -249,12 +228,13 @@ body {
 .ghost-button {
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.56);
-  border: 1px solid rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
 .pill-button:hover,
-.ghost-button:hover {
+.ghost-button:hover,
+.move-option:hover {
   transform: translateY(-1px);
 }
 
@@ -262,13 +242,15 @@ body {
   min-height: 760px;
   border-radius: 32px;
   padding: 24px;
+  display: grid;
+  gap: 24px;
 }
 
 .panel-empty {
   border: 1px dashed var(--line);
   border-radius: 24px;
   padding: 28px;
-  background: rgba(255,255,255,0.42);
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .hidden {
@@ -291,6 +273,10 @@ body {
   padding: 22px;
 }
 
+.move-card {
+  width: min(520px, 100%);
+}
+
 .settings-card {
   width: min(640px, 100%);
 }
@@ -306,7 +292,8 @@ body {
   box-shadow: var(--shadow);
 }
 
-.hero-stats {
+.hero-stats,
+.move-options {
   display: grid;
   gap: 12px;
 }
@@ -376,11 +363,6 @@ body {
 .overview-chip strong {
   display: block;
   margin-top: 6px;
-}
-
-.side-panel {
-  display: grid;
-  gap: 24px;
 }
 
 .timeline-list {
@@ -464,7 +446,7 @@ select {
   border: 1px solid rgba(77, 52, 34, 0.12);
   border-radius: 16px;
   padding: 12px 14px;
-  background: rgba(255,255,255,0.86);
+  background: rgba(255, 255, 255, 0.86);
   color: var(--text);
 }
 
@@ -478,7 +460,7 @@ select {
   padding: 9px 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255,255,255,0.72);
+  background: rgba(255, 255, 255, 0.72);
   cursor: pointer;
 }
 
@@ -486,6 +468,20 @@ select {
   color: white;
   border-color: transparent;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.move-option {
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.move-option strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.move-empty {
+  padding: 14px 16px;
 }
 
 .switch {
@@ -523,7 +519,7 @@ select {
   height: 24px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   transition: transform 0.2s ease;
 }
 
@@ -557,7 +553,8 @@ select {
     border-radius: 24px;
   }
 
-  .form-grid {
+  .form-grid,
+  .overview-grid {
     grid-template-columns: 1fr;
   }
 }

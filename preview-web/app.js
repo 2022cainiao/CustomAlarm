@@ -23,11 +23,11 @@ const text = {
   none: "暂无",
   noActiveAlarms: "当前没有生效中的闹钟",
   routineGroups: "作息组数量",
-  routineGroupHint: "每个作息组都有独立的总开关。",
+  routineGroupHint: "每个作息组都有独立的总开关，且不会覆盖组内单闹钟状态。",
   overviewTitle: "实时总览",
   noActiveScheduled: "当前没有生效中的闹钟",
   nextRingAt: "下一次响铃时间",
-  overviewCopy: "作息闹钟是否生效 = 作息组总开关 + 子闹钟开关。",
+  overviewCopy: "作息闹钟是否生效 = 作息组总开关 + 子闹钟开关同时开启。",
   standardActive: "普通闹钟启用",
   routineActive: "作息闹钟生效",
   groupsEnabled: "作息组启用",
@@ -40,6 +40,8 @@ const text = {
   currentlyInactive: "当前未生效",
   edit: "编辑",
   delete: "删除",
+  move: "移动",
+  moveIntoRoutine: "移入作息组",
   noStandardAlarms: "还没有普通闹钟",
   createWithAdd: "可以通过上方按钮新增一个。",
   next: "下次",
@@ -74,37 +76,55 @@ const text = {
   routineNameRequired: "请输入作息组名称。",
   routineSaved: "作息组已保存。",
   invalidTime: "时间输入不合法。",
+  createRoutineFirst: "请先创建作息组。",
   alarmSaved: "闹钟已保存。",
   deleted: "已删除。",
   exportFileName: "custom-alarm-preview-state.json",
   demoReset: "演示数据已重置。",
+  moveAlarmTitle: "移动闹钟",
+  moveNormalDescription: "选择要移入的作息组。",
+  moveRoutineDescription: "你可以把这个闹钟移回普通闹钟，或移动到其他作息组。",
+  moveToStandard: "移回普通闹钟",
+  noOtherRoutineGroups: "没有其他可移动的作息组",
+  movedToStandard: "闹钟已移回普通闹钟。",
+  movedToGroup: "闹钟已移动到作息组。",
+  close: "关闭",
+  save: "保存",
+  reset: "重置",
+  permissions: "权限",
+  home: "首页",
+  preview: "网页预览",
+  customAlarmTitle: "自定义闹钟与作息组",
+  heroCopy: "在 Android 真机打磨前，先预览核心体验：普通闹钟、作息组、组级总开关，以及组内闹钟统一管理与快速移动。",
+  standardSection: "普通闹钟",
+  routineSection: "作息模式",
+  timelineTitle: "统一时间线",
+  timelineTag: "即将响铃",
+  detailTag: "作息详情",
+  detailPlaceholderTitle: "请选择一个作息组",
+  detailPlaceholderCopy: "右侧会展示作息组总开关，以及该组内的全部闹钟。",
+  addAlarmButton: "+ 添加闹钟",
+  addRoutineButton: "+ 新建作息组",
+  addRoutineAlarmButton: "+ 添加组内闹钟",
+  exportJson: "导出 JSON",
+  settingsTitle: "闹钟能力开关",
+  exactAlarmSettingCopy: "模拟 Android 的精确闹钟调度权限。",
+  notificationsSettingCopy: "模拟响铃通知是否可用。",
+  groupOwnership: "所属作息组",
+  repeatLabel: "重复日期",
+  hourLabel: "小时",
+  minuteLabel: "分钟",
+  vibrateLabel: "震动",
+  snoozeLabel: "贪睡",
+  snoozeMinutesLabel: "贪睡分钟",
+  moveEmptyCopy: "当前没有可选的目标作息组。",
 };
 
 function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function demoState() {
-  const workdayId = uid();
-  const weekendId = uid();
-  return {
-    permissions: { exactAlarm: true, notifications: true },
-    selectedRoutineId: workdayId,
-    routineGroups: [
-      { id: workdayId, name: "工作日作息", enabled: true },
-      { id: weekendId, name: "周末作息", enabled: false },
-    ],
-    alarms: [
-      normalAlarm("早起学习", 6, 40, [1, 2, 3, 4, 5], true),
-      normalAlarm("午休提醒", 13, 10, [], false),
-      routineAlarm("起床", 7, 0, [1, 2, 3, 4, 5], workdayId, true),
-      routineAlarm("出门准备", 8, 5, [1, 2, 3, 4, 5], workdayId, true),
-      routineAlarm("周末起床", 9, 20, [6, 7], weekendId, true),
-    ],
-  };
-}
-
-function normalAlarm(label, hour, minute, repeatDays, enabled) {
+function createNormalAlarm(label, hour, minute, repeatDays, enabled) {
   return {
     id: uid(),
     type: "normal",
@@ -120,11 +140,31 @@ function normalAlarm(label, hour, minute, repeatDays, enabled) {
   };
 }
 
-function routineAlarm(label, hour, minute, repeatDays, routineGroupId, enabled) {
+function createRoutineAlarm(label, hour, minute, repeatDays, routineGroupId, enabled) {
   return {
-    ...normalAlarm(label, hour, minute, repeatDays, enabled),
+    ...createNormalAlarm(label, hour, minute, repeatDays, enabled),
     type: "routine",
     routineGroupId,
+  };
+}
+
+function demoState() {
+  const workdayId = uid();
+  const weekendId = uid();
+  return {
+    permissions: { exactAlarm: true, notifications: true },
+    selectedRoutineId: workdayId,
+    routineGroups: [
+      { id: workdayId, name: "工作日作息", enabled: true },
+      { id: weekendId, name: "周末作息", enabled: false },
+    ],
+    alarms: [
+      createNormalAlarm("早起学习", 6, 40, [1, 2, 3, 4, 5], true),
+      createNormalAlarm("午休提醒", 13, 10, [], false),
+      createRoutineAlarm("起床", 7, 0, [1, 2, 3, 4, 5], workdayId, true),
+      createRoutineAlarm("出门准备", 8, 5, [1, 2, 3, 4, 5], workdayId, true),
+      createRoutineAlarm("周末起床", 9, 20, [6, 7], weekendId, true),
+    ],
   };
 }
 
@@ -133,7 +173,7 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return demoState();
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.alarms) || !Array.isArray(parsed.routineGroups)) return demoState();
+    if (!Array.isArray(parsed?.alarms) || !Array.isArray(parsed?.routineGroups)) return demoState();
     return normalizeState(parsed);
   } catch {
     return demoState();
@@ -146,7 +186,6 @@ function normalizeState(rawState) {
     exactAlarm: rawState?.permissions?.exactAlarm ?? fallback.permissions.exactAlarm,
     notifications: rawState?.permissions?.notifications ?? fallback.permissions.notifications,
   };
-
   const routineGroups = rawState.routineGroups.map((routine) => ({
     id: routine.id || uid(),
     name: routine.name || "未命名作息组",
@@ -154,29 +193,28 @@ function normalizeState(rawState) {
   }));
 
   const validRoutineIds = new Set(routineGroups.map((routine) => routine.id));
-  const alarms = rawState.alarms.map((alarm) => ({
-    id: alarm.id || uid(),
-    type: alarm.type === "routine" ? "routine" : "normal",
-    label: alarm.label || "",
-    hour: Number.isFinite(alarm.hour) ? alarm.hour : 7,
-    minute: Number.isFinite(alarm.minute) ? alarm.minute : 0,
-    repeatDays: Array.isArray(alarm.repeatDays) ? alarm.repeatDays : [],
-    vibrate: alarm.vibrate ?? true,
-    snoozeEnabled: alarm.snoozeEnabled ?? true,
-    snoozeMinutes: Number.isFinite(alarm.snoozeMinutes) ? alarm.snoozeMinutes : 10,
-    enabled: alarm.enabled ?? true,
-    routineGroupId: alarm.type === "routine" && validRoutineIds.has(alarm.routineGroupId)
-      ? alarm.routineGroupId
-      : null,
-  }));
-
-  const selectedRoutineId = validRoutineIds.has(rawState.selectedRoutineId)
-    ? rawState.selectedRoutineId
-    : routineGroups[0]?.id || null;
+  const alarms = rawState.alarms.map((alarm) => {
+    const isRoutine = alarm.type === "routine" && validRoutineIds.has(alarm.routineGroupId);
+    return {
+      id: alarm.id || uid(),
+      type: isRoutine ? "routine" : "normal",
+      label: alarm.label || "",
+      hour: Number.isFinite(alarm.hour) ? alarm.hour : 7,
+      minute: Number.isFinite(alarm.minute) ? alarm.minute : 0,
+      repeatDays: Array.isArray(alarm.repeatDays) ? alarm.repeatDays : [],
+      vibrate: alarm.vibrate ?? true,
+      snoozeEnabled: alarm.snoozeEnabled ?? true,
+      snoozeMinutes: Number.isFinite(alarm.snoozeMinutes) ? alarm.snoozeMinutes : 10,
+      enabled: alarm.enabled ?? true,
+      routineGroupId: isRoutine ? alarm.routineGroupId : null,
+    };
+  });
 
   return {
     permissions,
-    selectedRoutineId,
+    selectedRoutineId: validRoutineIds.has(rawState.selectedRoutineId)
+      ? rawState.selectedRoutineId
+      : routineGroups[0]?.id || null,
     routineGroups,
     alarms,
   };
@@ -184,9 +222,55 @@ function normalizeState(rawState) {
 
 let state = loadState();
 const editor = { mode: "alarm", alarmType: "normal", editingId: null };
+const moveDialog = { alarmId: null };
 
 const $ = (selector) => document.querySelector(selector);
 const els = {
+  pageTitle: $("#pageTitle"),
+  heroEyebrow: $("#heroEyebrow"),
+  heroTitle: $("#heroTitle"),
+  heroCopy: $("#heroCopy"),
+  screenLabel: $("#screenLabel"),
+  screenTitle: $("#screenTitle"),
+  permissionButton: $("#openSettingsButton"),
+  resetButton: $("#resetDemoButton"),
+  standardKicker: $("#standardKicker"),
+  standardTitle: $("#standardTitle"),
+  addNormalAlarmButton: $("#addNormalAlarmButton"),
+  routineKicker: $("#routineKicker"),
+  routineTitle: $("#routineTitle"),
+  addRoutineButton: $("#addRoutineButton"),
+  timelineTag: $("#timelineTag"),
+  timelineTitle: $("#timelineTitle"),
+  exportStateButton: $("#exportStateButton"),
+  detailTag: $("#detailTag"),
+  detailPlaceholderTitle: $("#detailPlaceholderTitle"),
+  detailPlaceholderCopy: $("#detailPlaceholderCopy"),
+  editRoutineButton: $("#editRoutineButton"),
+  addRoutineAlarmButton: $("#addRoutineAlarmButton"),
+  editorCloseButton: $("#closeEditorButton"),
+  editorDeleteButton: $("#deleteButton"),
+  editorSaveButton: $("#saveButton"),
+  settingsCloseButton: $("#closeSettingsButton"),
+  settingsTag: $("#settingsTag"),
+  settingsTitle: $("#settingsTitle"),
+  exactAlarmTitle: $("#exactAlarmTitle"),
+  exactAlarmCopy: $("#exactAlarmCopy"),
+  notificationsTitle: $("#notificationsTitle"),
+  notificationsCopy: $("#notificationsCopy"),
+  timeHourLabel: $("#timeHourLabel"),
+  timeMinuteLabel: $("#timeMinuteLabel"),
+  routineGroupLabel: $("#routineGroupLabel"),
+  repeatLabel: $("#repeatLabel"),
+  vibrateLabel: $("#vibrateLabel"),
+  snoozeLabel: $("#snoozeLabel"),
+  snoozeMinutesLabel: $("#snoozeMinutesLabel"),
+  moveModal: $("#moveModal"),
+  moveTitle: $("#moveTitle"),
+  moveDescription: $("#moveDescription"),
+  moveOptions: $("#moveOptions"),
+  moveToStandardButton: $("#moveToStandardButton"),
+  moveCloseButton: $("#closeMoveButton"),
   heroStats: $("#heroStats"),
   overviewCard: $("#overviewCard"),
   permissionStrip: $("#permissionStrip"),
@@ -220,14 +304,56 @@ const els = {
   enabledInput: $("#enabledInput"),
   enabledFieldLabel: $("#enabledFieldLabel"),
   editorHint: $("#editorHint"),
-  deleteButton: $("#deleteButton"),
   settingsModal: $("#settingsModal"),
   exactPermissionToggle: $("#exactPermissionToggle"),
   notificationPermissionToggle: $("#notificationPermissionToggle"),
   toast: $("#toast"),
 };
 
-const weekdays = text.weekdays;
+function hydrateStaticText() {
+  document.title = text.customAlarmTitle;
+  els.pageTitle.textContent = text.customAlarmTitle;
+  els.heroEyebrow.textContent = text.preview;
+  els.heroTitle.textContent = text.customAlarmTitle;
+  els.heroCopy.textContent = text.heroCopy;
+  els.screenLabel.textContent = text.home;
+  els.screenTitle.textContent = text.customAlarmTitle;
+  els.permissionButton.textContent = text.permissions;
+  els.resetButton.textContent = text.reset;
+  els.standardKicker.textContent = text.standardSection;
+  els.standardTitle.textContent = text.standardSection;
+  els.addNormalAlarmButton.textContent = text.addAlarmButton;
+  els.routineKicker.textContent = text.routineSection;
+  els.routineTitle.textContent = "作息组";
+  els.addRoutineButton.textContent = text.addRoutineButton;
+  els.timelineTag.textContent = text.timelineTag;
+  els.timelineTitle.textContent = text.timelineTitle;
+  els.exportStateButton.textContent = text.exportJson;
+  els.detailTag.textContent = text.detailTag;
+  els.detailPlaceholderTitle.textContent = text.detailPlaceholderTitle;
+  els.detailPlaceholderCopy.textContent = text.detailPlaceholderCopy;
+  els.editRoutineButton.textContent = text.editGroup;
+  els.addRoutineAlarmButton.textContent = text.addRoutineAlarmButton;
+  els.editorCloseButton.textContent = text.close;
+  els.editorDeleteButton.textContent = text.delete;
+  els.editorSaveButton.textContent = text.save;
+  els.settingsCloseButton.textContent = text.close;
+  els.settingsTag.textContent = text.permissions;
+  els.settingsTitle.textContent = text.settingsTitle;
+  els.exactAlarmTitle.textContent = text.exactAlarm;
+  els.exactAlarmCopy.textContent = text.exactAlarmSettingCopy;
+  els.notificationsTitle.textContent = text.notifications;
+  els.notificationsCopy.textContent = text.notificationsSettingCopy;
+  els.timeHourLabel.textContent = text.hourLabel;
+  els.timeMinuteLabel.textContent = text.minuteLabel;
+  els.routineGroupLabel.textContent = text.groupOwnership;
+  els.repeatLabel.textContent = text.repeatLabel;
+  els.vibrateLabel.textContent = text.vibrateLabel;
+  els.snoozeLabel.textContent = text.snoozeLabel;
+  els.snoozeMinutesLabel.textContent = text.snoozeMinutesLabel;
+  els.moveCloseButton.textContent = text.close;
+  els.moveToStandardButton.textContent = text.moveToStandard;
+}
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -240,11 +366,11 @@ function toast(message) {
   toast.timer = setTimeout(() => els.toast.classList.add("hidden"), 1800);
 }
 
-function time(hour, minute) {
+function formatTime(hour, minute) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function group(id) {
+function getGroup(id) {
   return state.routineGroups.find((item) => item.id === id);
 }
 
@@ -254,12 +380,15 @@ function repeatText(days) {
   if (sorted === "1,2,3,4,5") return text.repeatWorkdays;
   if (sorted === "6,7") return text.repeatWeekend;
   if (sorted === "1,2,3,4,5,6,7") return text.repeatEveryday;
-  return sorted.split(",").map((day) => weekdays.find(([value]) => value === Number(day))?.[1]).join(" ");
+  return sorted
+    .split(",")
+    .map((day) => text.weekdays.find(([value]) => value === Number(day))?.[1])
+    .join(" ");
 }
 
 function isEffective(alarm) {
   if (alarm.type === "normal") return alarm.enabled;
-  return alarm.enabled && Boolean(group(alarm.routineGroupId)?.enabled);
+  return alarm.enabled && Boolean(getGroup(alarm.routineGroupId)?.enabled);
 }
 
 function byTime(a, b) {
@@ -276,6 +405,11 @@ function routineStats(routine) {
   return { alarms, active, next: active[0] || null };
 }
 
+function ensureSelectedRoutine() {
+  if (state.selectedRoutineId && getGroup(state.selectedRoutineId)) return;
+  state.selectedRoutineId = state.routineGroups[0]?.id || null;
+}
+
 function alarmBadges(alarm) {
   return `
     <span class="badge ${isEffective(alarm) ? "active" : "sleeping"}">${isEffective(alarm) ? text.effective : text.blocked}</span>
@@ -290,7 +424,7 @@ function renderHero() {
   els.heroStats.innerHTML = `
     <div class="stat-card">
       <p class="panel-tag">${text.nextAlarm}</p>
-      <strong>${next ? time(next.hour, next.minute) : text.none}</strong>
+      <strong>${next ? formatTime(next.hour, next.minute) : text.none}</strong>
       <div class="stat-meta">${next ? next.label || text.unnamedAlarm : text.noActiveAlarms}</div>
     </div>
     <div class="stat-card">
@@ -308,7 +442,7 @@ function renderOverview() {
   const next = upcoming()[0];
   els.overviewCard.innerHTML = `
     <p class="screen-label">${text.overviewTitle}</p>
-    <h3>${next ? `${text.nextRingAt} ${time(next.hour, next.minute)}` : text.noActiveScheduled}</h3>
+    <h3>${next ? `${text.nextRingAt} ${formatTime(next.hour, next.minute)}` : text.noActiveScheduled}</h3>
     <p class="overview-copy">${text.overviewCopy}</p>
     <div class="overview-grid">
       <div class="overview-chip"><span>${text.standardActive}</span><strong>${standardActive}</strong></div>
@@ -322,20 +456,25 @@ function renderPermissions() {
   els.permissionStrip.innerHTML = [
     [text.exactAlarm, state.permissions.exactAlarm, text.exactAlarmDesc],
     [text.notifications, state.permissions.notifications, text.notificationsDesc],
-  ].map(([title, enabled, desc]) => `
-    <div class="permission-pill">
-      <div><strong>${title}</strong><div class="alarm-meta">${desc}</div></div>
-      <span class="permission-status ${enabled ? "" : "off"}">${enabled ? text.enabled : text.disabled}</span>
-    </div>
-  `).join("");
+  ]
+    .map(
+      ([title, enabled, desc]) => `
+        <div class="permission-pill">
+          <div><strong>${title}</strong><div class="alarm-meta">${desc}</div></div>
+          <span class="permission-status ${enabled ? "" : "off"}">${enabled ? text.enabled : text.disabled}</span>
+        </div>
+      `,
+    )
+    .join("");
 }
 
-function alarmCard(alarm, compact = false) {
+function alarmCard(alarm, variant = "normal") {
+  const moveLabel = variant === "normal" ? text.moveIntoRoutine : text.move;
   return `
-    <article class="${compact ? "detail-alarm-card" : "alarm-card"}">
+    <article class="${variant === "routine" ? "detail-alarm-card" : "alarm-card"}">
       <div class="alarm-top">
         <div>
-          <div class="alarm-time">${time(alarm.hour, alarm.minute)}</div>
+          <div class="alarm-time">${formatTime(alarm.hour, alarm.minute)}</div>
           <strong>${alarm.label || text.unnamedAlarm}</strong>
           <div class="alarm-meta">${isEffective(alarm) ? repeatText(alarm.repeatDays) : text.currentlyInactive}</div>
           <div class="badge-row">${alarmBadges(alarm)}</div>
@@ -347,6 +486,7 @@ function alarmCard(alarm, compact = false) {
       </div>
       <div class="alarm-actions">
         <button class="pill-button" data-action="edit-alarm" data-id="${alarm.id}">${text.edit}</button>
+        <button class="pill-button" data-action="move-alarm" data-id="${alarm.id}">${moveLabel}</button>
         <button class="pill-button" data-action="delete-alarm" data-id="${alarm.id}">${text.delete}</button>
       </div>
     </article>
@@ -356,54 +496,66 @@ function alarmCard(alarm, compact = false) {
 function renderNormalAlarms() {
   const alarms = state.alarms.filter((alarm) => alarm.type === "normal").sort(byTime);
   els.normalAlarmList.innerHTML = alarms.length
-    ? alarms.map((alarm) => alarmCard(alarm)).join("")
+    ? alarms.map((alarm) => alarmCard(alarm, "normal")).join("")
     : `<article class="alarm-card"><strong>${text.noStandardAlarms}</strong><div class="alarm-meta">${text.createWithAdd}</div></article>`;
 }
 
 function renderRoutineGroups() {
   els.routineGroupList.innerHTML = state.routineGroups.length
-    ? state.routineGroups.map((routine) => {
-      const stats = routineStats(routine);
-      return `
-        <article class="routine-card">
-          <div class="routine-top">
-            <div>
-              <strong>${routine.name}</strong>
-              <div class="routine-meta">${stats.active.length} 个生效闹钟 | ${text.next} ${stats.next ? time(stats.next.hour, stats.next.minute) : text.none}</div>
-              <div class="badge-row">
-                <span class="badge ${routine.enabled ? "active" : "sleeping"}">${routine.enabled ? text.groupEnabled : text.groupDisabled}</span>
-                <span class="badge">${stats.alarms.length} 个${text.alarmsInside}</span>
+    ? state.routineGroups
+        .map((routine) => {
+          const stats = routineStats(routine);
+          return `
+            <article class="routine-card">
+              <div class="routine-top">
+                <div>
+                  <strong>${routine.name}</strong>
+                  <div class="routine-meta">${stats.active.length} 个生效闹钟 | ${text.next} ${stats.next ? formatTime(stats.next.hour, stats.next.minute) : text.none}</div>
+                  <div class="badge-row">
+                    <span class="badge ${routine.enabled ? "active" : "sleeping"}">${routine.enabled ? text.groupEnabled : text.groupDisabled}</span>
+                    <span class="badge">${stats.alarms.length} 个${text.alarmsInside}</span>
+                  </div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-action="toggle-group" data-id="${routine.id}" ${routine.enabled ? "checked" : ""} />
+                  <span class="switch-track"></span>
+                </label>
               </div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" data-action="toggle-group" data-id="${routine.id}" ${routine.enabled ? "checked" : ""} />
-              <span class="switch-track"></span>
-            </label>
-          </div>
-          <div class="routine-actions">
-            <button class="pill-button" data-action="open-group" data-id="${routine.id}">${text.openDetail}</button>
-            <button class="pill-button" data-action="edit-group" data-id="${routine.id}">${text.editGroup}</button>
-          </div>
-        </article>
-      `;
-    }).join("")
+              <div class="routine-actions">
+                <button class="pill-button" data-action="open-group" data-id="${routine.id}">${text.openDetail}</button>
+                <button class="pill-button" data-action="edit-group" data-id="${routine.id}">${text.editGroup}</button>
+              </div>
+            </article>
+          `;
+        })
+        .join("")
     : `<article class="routine-card"><strong>${text.noRoutineGroups}</strong></article>`;
 }
 
 function renderTimeline() {
   const alarms = upcoming();
   els.timelineList.innerHTML = alarms.length
-    ? alarms.map((alarm) => `<article class="timeline-card"><strong>${time(alarm.hour, alarm.minute)} | ${alarm.label || text.unnamedAlarm}</strong><div class="timeline-meta">${alarm.type === "normal" ? text.standardAlarm : group(alarm.routineGroupId)?.name || text.routineAlarm}</div></article>`).join("")
+    ? alarms
+        .map(
+          (alarm) => `
+            <article class="timeline-card">
+              <strong>${formatTime(alarm.hour, alarm.minute)} | ${alarm.label || text.unnamedAlarm}</strong>
+              <div class="timeline-meta">${alarm.type === "normal" ? text.standardAlarm : getGroup(alarm.routineGroupId)?.name || text.routineAlarm}</div>
+            </article>
+          `,
+        )
+        .join("")
     : `<article class="timeline-card"><strong>${text.noTimeline}</strong><div class="timeline-meta">${text.timelineHint}</div></article>`;
 }
 
 function renderDetail() {
-  const routine = group(state.selectedRoutineId);
+  const routine = getGroup(state.selectedRoutineId);
   if (!routine) {
     els.detailEmpty.classList.remove("hidden");
     els.detailContent.classList.add("hidden");
     return;
   }
+
   const stats = routineStats(routine);
   els.detailEmpty.classList.add("hidden");
   els.detailContent.classList.remove("hidden");
@@ -411,16 +563,31 @@ function renderDetail() {
   els.detailSummary.textContent = `${stats.alarms.length} 个${text.alarmsInsideCount} | ${stats.active.length} 个${text.effectiveCount}`;
   els.detailGroupToggle.checked = routine.enabled;
   els.detailAlarmList.innerHTML = stats.alarms.length
-    ? stats.alarms.map((alarm) => alarmCard(alarm, true)).join("")
+    ? stats.alarms.map((alarm) => alarmCard(alarm, "routine")).join("")
     : `<article class="detail-alarm-card"><strong>${text.noAlarmsYet}</strong><div class="detail-subtext">${text.addFirstAlarm}</div></article>`;
 }
 
 function renderWeekdays(selected = []) {
-  els.weekdayGrid.innerHTML = weekdays.map(([value, label]) => `<button type="button" class="weekday-chip ${selected.includes(value) ? "active" : ""}" data-action="toggle-weekday" data-day="${value}">${label}</button>`).join("");
+  els.weekdayGrid.innerHTML = text.weekdays
+    .map(
+      ([value, label]) =>
+        `<button type="button" class="weekday-chip ${selected.includes(value) ? "active" : ""}" data-action="toggle-weekday" data-day="${value}">${label}</button>`,
+    )
+    .join("");
 }
 
 function renderRoutineOptions(selectedId) {
-  els.routineGroupSelect.innerHTML = state.routineGroups.map((routine) => `<option value="${routine.id}" ${routine.id === selectedId ? "selected" : ""}>${routine.name}</option>`).join("");
+  if (!state.routineGroups.length) {
+    els.routineGroupSelect.innerHTML = `<option value="">${text.createRoutineFirst}</option>`;
+    return;
+  }
+
+  els.routineGroupSelect.innerHTML = state.routineGroups
+    .map(
+      (routine) =>
+        `<option value="${routine.id}" ${routine.id === selectedId ? "selected" : ""}>${routine.name}</option>`,
+    )
+    .join("");
 }
 
 function openAlarmEditor({ alarmType, alarmId = null, routineGroupId = null }) {
@@ -437,7 +604,7 @@ function openAlarmEditor({ alarmType, alarmId = null, routineGroupId = null }) {
   els.weekdayBlock.classList.remove("hidden");
   els.alarmToggleFields.classList.remove("hidden");
   els.snoozeField.classList.remove("hidden");
-  els.deleteButton.classList.toggle("hidden", !alarm);
+  els.editorDeleteButton.classList.toggle("hidden", !alarm);
   els.hourInput.value = alarm?.hour ?? 7;
   els.minuteInput.value = alarm?.minute ?? 0;
   els.labelInput.value = alarm?.label ?? "";
@@ -452,7 +619,7 @@ function openAlarmEditor({ alarmType, alarmId = null, routineGroupId = null }) {
 }
 
 function openRoutineEditor(groupId = null) {
-  const routine = group(groupId);
+  const routine = getGroup(groupId);
   editor.mode = "routine";
   editor.editingId = groupId;
   els.editorModal.classList.remove("hidden");
@@ -465,7 +632,7 @@ function openRoutineEditor(groupId = null) {
   els.alarmToggleFields.classList.add("hidden");
   els.snoozeField.classList.add("hidden");
   els.routineGroupField.classList.add("hidden");
-  els.deleteButton.classList.toggle("hidden", !routine);
+  els.editorDeleteButton.classList.toggle("hidden", !routine);
   els.labelInput.value = routine?.name || "";
   els.enabledInput.checked = routine?.enabled ?? true;
   els.editorHint.textContent = text.routineOverwriteHint;
@@ -475,13 +642,78 @@ function closeEditor() {
   els.editorModal.classList.add("hidden");
 }
 
+function getMoveTargets(alarm) {
+  if (!alarm) return [];
+  return state.routineGroups.filter((routine) => routine.id !== alarm.routineGroupId);
+}
+
+function openMoveDialog(alarmId) {
+  const alarm = state.alarms.find((item) => item.id === alarmId);
+  if (!alarm) return;
+
+  moveDialog.alarmId = alarmId;
+  els.moveModal.classList.remove("hidden");
+  els.moveTitle.textContent = text.moveAlarmTitle;
+  els.moveDescription.textContent = alarm.type === "normal" ? text.moveNormalDescription : text.moveRoutineDescription;
+  els.moveToStandardButton.classList.toggle("hidden", alarm.type !== "routine");
+
+  const moveTargets = getMoveTargets(alarm);
+  els.moveOptions.innerHTML = moveTargets.length
+    ? moveTargets
+        .map(
+          (target) => `
+            <button type="button" class="move-option" data-action="move-to-group" data-group-id="${target.id}">
+              <strong>${target.name}</strong>
+              <span>将闹钟移动到这个作息组</span>
+            </button>
+          `,
+        )
+        .join("")
+    : `<div class="move-empty">${alarm.type === "normal" ? text.moveEmptyCopy : text.noOtherRoutineGroups}</div>`;
+}
+
+function closeMoveDialog() {
+  moveDialog.alarmId = null;
+  els.moveModal.classList.add("hidden");
+  els.moveOptions.innerHTML = "";
+}
+
+function moveAlarmToStandard(alarmId) {
+  const alarm = state.alarms.find((item) => item.id === alarmId);
+  if (!alarm) return;
+  alarm.type = "normal";
+  alarm.routineGroupId = null;
+  ensureSelectedRoutine();
+  closeMoveDialog();
+  renderAll();
+  toast(text.movedToStandard);
+}
+
+function moveAlarmToGroup(alarmId, groupId) {
+  const alarm = state.alarms.find((item) => item.id === alarmId);
+  const targetGroup = getGroup(groupId);
+  if (!alarm || !targetGroup) return;
+  alarm.type = "routine";
+  alarm.routineGroupId = groupId;
+  state.selectedRoutineId = groupId;
+  closeMoveDialog();
+  renderAll();
+  toast(text.movedToGroup);
+}
+
 function saveEditor(event) {
   event.preventDefault();
+
   if (editor.mode === "routine") {
     const name = els.labelInput.value.trim();
-    if (!name) return toast(text.routineNameRequired);
+    if (!name) {
+      toast(text.routineNameRequired);
+      return;
+    }
+
     if (editor.editingId) {
-      const target = group(editor.editingId);
+      const target = getGroup(editor.editingId);
+      if (!target) return;
       target.name = name;
       target.enabled = els.enabledInput.checked;
     } else {
@@ -489,9 +721,11 @@ function saveEditor(event) {
       state.routineGroups.push(newGroup);
       state.selectedRoutineId = newGroup.id;
     }
+
     closeEditor();
     renderAll();
-    return toast(text.routineSaved);
+    toast(text.routineSaved);
+    return;
   }
 
   const payload = {
@@ -507,11 +741,28 @@ function saveEditor(event) {
     enabled: els.enabledInput.checked,
     routineGroupId: editor.alarmType === "routine" ? els.routineGroupSelect.value : null,
   };
-  if (payload.hour < 0 || payload.hour > 23 || payload.minute < 0 || payload.minute > 59) return toast(text.invalidTime);
+
+  if (payload.hour < 0 || payload.hour > 23 || payload.minute < 0 || payload.minute > 59) {
+    toast(text.invalidTime);
+    return;
+  }
+
+  if (payload.type === "routine" && !payload.routineGroupId) {
+    toast(text.createRoutineFirst);
+    return;
+  }
+
   const index = state.alarms.findIndex((item) => item.id === payload.id);
-  if (index >= 0) state.alarms[index] = payload;
-  else state.alarms.push(payload);
-  if (payload.routineGroupId) state.selectedRoutineId = payload.routineGroupId;
+  if (index >= 0) {
+    state.alarms[index] = payload;
+  } else {
+    state.alarms.push(payload);
+  }
+
+  if (payload.routineGroupId) {
+    state.selectedRoutineId = payload.routineGroupId;
+  }
+
   closeEditor();
   renderAll();
   toast(text.alarmSaved);
@@ -521,11 +772,13 @@ function deleteCurrent() {
   if (editor.mode === "routine" && editor.editingId) {
     state.alarms = state.alarms.filter((alarm) => alarm.routineGroupId !== editor.editingId);
     state.routineGroups = state.routineGroups.filter((routine) => routine.id !== editor.editingId);
-    if (state.selectedRoutineId === editor.editingId) state.selectedRoutineId = null;
+    ensureSelectedRoutine();
   }
+
   if (editor.mode === "alarm" && editor.editingId) {
     state.alarms = state.alarms.filter((alarm) => alarm.id !== editor.editingId);
   }
+
   closeEditor();
   renderAll();
   toast(text.deleted);
@@ -541,65 +794,71 @@ function exportJson() {
   URL.revokeObjectURL(url);
 }
 
-function bindDynamicInteractions() {
-  document.querySelectorAll('[data-action="toggle-weekday"]').forEach((button) => {
-    button.addEventListener("click", () => {
-      button.classList.toggle("active");
-    });
-  });
+function handleActionClick(target) {
+  const actionTarget = target.closest("[data-action]");
+  if (!actionTarget) return;
 
-  document.querySelectorAll('[data-action="open-group"]').forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedRoutineId = button.dataset.id;
+  const { action, id, groupId } = actionTarget.dataset;
+
+  switch (action) {
+    case "toggle-weekday":
+      actionTarget.classList.toggle("active");
+      break;
+    case "open-group":
+      state.selectedRoutineId = id;
       renderAll();
-    });
-  });
-
-  document.querySelectorAll('[data-action="edit-group"]').forEach((button) => {
-    button.addEventListener("click", () => {
-      openRoutineEditor(button.dataset.id);
-    });
-  });
-
-  document.querySelectorAll('[data-action="edit-alarm"]').forEach((button) => {
-    button.addEventListener("click", () => {
-      const alarm = state.alarms.find((item) => item.id === button.dataset.id);
+      break;
+    case "edit-group":
+      openRoutineEditor(id);
+      break;
+    case "edit-alarm": {
+      const alarm = state.alarms.find((item) => item.id === id);
       if (!alarm) return;
       openAlarmEditor({
         alarmType: alarm.type,
-        alarmId: button.dataset.id,
+        alarmId: id,
         routineGroupId: alarm.routineGroupId,
       });
-    });
-  });
-
-  document.querySelectorAll('[data-action="delete-alarm"]').forEach((button) => {
-    button.addEventListener("click", () => {
-      state.alarms = state.alarms.filter((alarm) => alarm.id !== button.dataset.id);
+      break;
+    }
+    case "delete-alarm":
+      state.alarms = state.alarms.filter((alarm) => alarm.id !== id);
       renderAll();
-    });
-  });
+      toast(text.deleted);
+      break;
+    case "move-alarm":
+      openMoveDialog(id);
+      break;
+    case "move-to-group":
+      if (moveDialog.alarmId) moveAlarmToGroup(moveDialog.alarmId, groupId);
+      break;
+    default:
+      break;
+  }
+}
 
-  document.querySelectorAll('[data-action="toggle-group"]').forEach((input) => {
-    input.addEventListener("change", () => {
-      const routine = group(input.dataset.id);
-      if (!routine) return;
-      routine.enabled = input.checked;
-      renderAll();
-    });
-  });
+function handleToggleChange(target) {
+  const { action, id } = target.dataset;
+  if (!action) return;
 
-  document.querySelectorAll('[data-action="toggle-alarm"]').forEach((input) => {
-    input.addEventListener("change", () => {
-      const alarm = state.alarms.find((item) => item.id === input.dataset.id);
-      if (!alarm) return;
-      alarm.enabled = input.checked;
-      renderAll();
-    });
-  });
+  if (action === "toggle-group") {
+    const routine = getGroup(id);
+    if (!routine) return;
+    routine.enabled = target.checked;
+    renderAll();
+    return;
+  }
+
+  if (action === "toggle-alarm") {
+    const alarm = state.alarms.find((item) => item.id === id);
+    if (!alarm) return;
+    alarm.enabled = target.checked;
+    renderAll();
+  }
 }
 
 function renderAll() {
+  ensureSelectedRoutine();
   saveState();
   renderHero();
   renderOverview();
@@ -608,31 +867,49 @@ function renderAll() {
   renderRoutineGroups();
   renderTimeline();
   renderDetail();
-  bindDynamicInteractions();
   els.exactPermissionToggle.checked = state.permissions.exactAlarm;
   els.notificationPermissionToggle.checked = state.permissions.notifications;
 }
 
+hydrateStaticText();
+
+document.addEventListener("click", (event) => handleActionClick(event.target));
+document.addEventListener("change", (event) => handleToggleChange(event.target));
+
 els.detailGroupToggle.addEventListener("change", (event) => {
-  const routine = group(state.selectedRoutineId);
-  if (routine) routine.enabled = event.target.checked;
+  const routine = getGroup(state.selectedRoutineId);
+  if (!routine) return;
+  routine.enabled = event.target.checked;
   renderAll();
 });
-$("#addNormalAlarmButton").addEventListener("click", () => openAlarmEditor({ alarmType: "normal" }));
-$("#addRoutineButton").addEventListener("click", () => openRoutineEditor());
-$("#addRoutineAlarmButton").addEventListener("click", () => openAlarmEditor({ alarmType: "routine", routineGroupId: state.selectedRoutineId }));
-$("#editRoutineButton").addEventListener("click", () => openRoutineEditor(state.selectedRoutineId));
-$("#closeEditorButton").addEventListener("click", closeEditor);
-$("#openSettingsButton").addEventListener("click", () => els.settingsModal.classList.remove("hidden"));
-$("#closeSettingsButton").addEventListener("click", () => els.settingsModal.classList.add("hidden"));
-$("#resetDemoButton").addEventListener("click", () => {
+
+els.addNormalAlarmButton.addEventListener("click", () => openAlarmEditor({ alarmType: "normal" }));
+els.addRoutineButton.addEventListener("click", () => openRoutineEditor());
+els.addRoutineAlarmButton.addEventListener("click", () => {
+  if (!state.selectedRoutineId) {
+    toast(text.createRoutineFirst);
+    return;
+  }
+  openAlarmEditor({ alarmType: "routine", routineGroupId: state.selectedRoutineId });
+});
+els.editRoutineButton.addEventListener("click", () => openRoutineEditor(state.selectedRoutineId));
+els.editorCloseButton.addEventListener("click", closeEditor);
+els.permissionButton.addEventListener("click", () => els.settingsModal.classList.remove("hidden"));
+els.settingsCloseButton.addEventListener("click", () => els.settingsModal.classList.add("hidden"));
+els.moveCloseButton.addEventListener("click", closeMoveDialog);
+els.moveToStandardButton.addEventListener("click", () => {
+  if (moveDialog.alarmId) moveAlarmToStandard(moveDialog.alarmId);
+});
+els.resetButton.addEventListener("click", () => {
   state = demoState();
+  closeEditor();
+  closeMoveDialog();
   renderAll();
   toast(text.demoReset);
 });
-$("#exportStateButton").addEventListener("click", exportJson);
+els.exportStateButton.addEventListener("click", exportJson);
 els.editorForm.addEventListener("submit", saveEditor);
-els.deleteButton.addEventListener("click", deleteCurrent);
+els.editorDeleteButton.addEventListener("click", deleteCurrent);
 els.exactPermissionToggle.addEventListener("change", (event) => {
   state.permissions.exactAlarm = event.target.checked;
   renderAll();
@@ -640,6 +917,12 @@ els.exactPermissionToggle.addEventListener("change", (event) => {
 els.notificationPermissionToggle.addEventListener("change", (event) => {
   state.permissions.notifications = event.target.checked;
   renderAll();
+});
+
+window.addEventListener("click", (event) => {
+  if (event.target === els.editorModal) closeEditor();
+  if (event.target === els.settingsModal) els.settingsModal.classList.add("hidden");
+  if (event.target === els.moveModal) closeMoveDialog();
 });
 
 renderAll();
