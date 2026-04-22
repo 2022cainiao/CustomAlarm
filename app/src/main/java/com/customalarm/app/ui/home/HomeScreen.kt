@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -17,21 +18,25 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,7 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
@@ -69,7 +76,6 @@ fun HomeScreen(
     onOpenRoutineGroup: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     var moveAlarmId by remember { mutableStateOf<Long?>(null) }
     var languageMenuExpanded by remember { mutableStateOf(false) }
 
@@ -85,9 +91,13 @@ fun HomeScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.screen_home_title)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 actions = {
                     LanguageMenuButton(
                         selectedLanguage = uiState.appLanguage,
@@ -102,14 +112,32 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                FloatingActionButton(onClick = onAddRoutineGroup) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add_routine_group))
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                FloatingActionButton(onClick = onAddNormalAlarm) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add_alarm))
-                }
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onAddNormalAlarm,
+                    text = { Text(stringResource(R.string.action_add_alarm)) },
+                    icon = {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.action_add_alarm)
+                        )
+                    }
+                )
+                ExtendedFloatingActionButton(
+                    onClick = onAddRoutineGroup,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    text = { Text(stringResource(R.string.action_add_routine_group)) },
+                    icon = {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.action_add_routine_group)
+                        )
+                    }
+                )
             }
         }
     ) { innerPadding ->
@@ -119,8 +147,19 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .padding(contentPadding),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                OverviewCard(
+                    totalAlarmCount = uiState.totalAlarmCount,
+                    enabledNormalCount = uiState.enabledNormalCount,
+                    routineGroupCount = uiState.routineGroupCount,
+                    enabledRoutineGroupCount = uiState.enabledRoutineGroupCount,
+                    effectiveRoutineAlarmCount = uiState.effectiveRoutineAlarmCount,
+                    nextTriggerAt = uiState.nextTriggerAt
+                )
+            }
+
             item {
                 PermissionCard(
                     exactAlarmEnabled = exactAlarmEnabled,
@@ -134,17 +173,6 @@ fun HomeScreen(
                 HolidayCalendarCard(
                     holidayCalendar = uiState.holidayCalendar,
                     onSyncHolidayCalendar = onSyncHolidayCalendar
-                )
-            }
-
-            item {
-                OverviewCard(
-                    totalAlarmCount = uiState.totalAlarmCount,
-                    enabledNormalCount = uiState.enabledNormalCount,
-                    routineGroupCount = uiState.routineGroupCount,
-                    enabledRoutineGroupCount = uiState.enabledRoutineGroupCount,
-                    effectiveRoutineAlarmCount = uiState.effectiveRoutineAlarmCount,
-                    nextTriggerAt = uiState.nextTriggerAt
                 )
             }
 
@@ -183,46 +211,11 @@ fun HomeScreen(
                 item { EmptyState(stringResource(R.string.empty_routine_groups)) }
             } else {
                 items(uiState.routineGroups, key = { it.id }) { group ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenRoutineGroup(group.id) }
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = group.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        text = stringResource(
-                                            R.string.label_active_of_total,
-                                            group.activeCount,
-                                            group.alarmCount,
-                                            formatNextTrigger(context, group.nextTriggerAt)
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                                Switch(
-                                    checked = group.enabled,
-                                    onCheckedChange = { viewModel.toggleRoutineGroup(group.id, it) }
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                OutlinedButton(onClick = { onOpenRoutineGroup(group.id) }) {
-                                    Text(stringResource(R.string.action_open_group))
-                                    Icon(Icons.Filled.ArrowForward, contentDescription = null)
-                                }
-                            }
-                        }
-                    }
+                    RoutineGroupCard(
+                        group = group,
+                        onOpen = { onOpenRoutineGroup(group.id) },
+                        onToggle = { viewModel.toggleRoutineGroup(group.id, it) }
+                    )
                 }
             }
         }
@@ -236,30 +229,35 @@ private fun LanguageMenuButton(
     onExpandChange: (Boolean) -> Unit,
     onSelectLanguage: (AppLanguage) -> Unit
 ) {
-    Column {
-        IconButton(
-            onClick = { onExpandChange(!expanded) }
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Language,
-                contentDescription = stringResource(R.string.action_change_language)
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { onExpandChange(false) }
-        ) {
-            AppLanguage.entries.forEach { language ->
-                val label = languageLabel(language)
-                val finalText = if (language == selectedLanguage) {
-                    stringResource(R.string.label_selected_language, label)
-                } else {
-                    label
-                }
-                DropdownMenuItem(
-                    text = { Text(finalText) },
-                    onClick = { onSelectLanguage(language) }
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column {
+            IconButton(
+                onClick = { onExpandChange(!expanded) }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Language,
+                    contentDescription = stringResource(R.string.action_change_language)
                 )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { onExpandChange(false) }
+            ) {
+                AppLanguage.entries.forEach { language ->
+                    val label = languageLabel(language)
+                    val finalText = if (language == selectedLanguage) {
+                        stringResource(R.string.label_selected_language, label)
+                    } else {
+                        label
+                    }
+                    DropdownMenuItem(
+                        text = { Text(finalText) },
+                        onClick = { onSelectLanguage(language) }
+                    )
+                }
             }
         }
     }
@@ -279,7 +277,8 @@ private fun HolidayCalendarCard(
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             }
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -306,7 +305,8 @@ private fun HolidayCalendarCard(
                 text = stringResource(
                     R.string.label_holiday_last_sync,
                     formatInstantOrDash(holidayCalendar.syncedAt)
-                )
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (holidayCalendar.shouldWarnSourceUnavailable) {
                 Text(
@@ -358,7 +358,8 @@ private fun OverviewCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -369,10 +370,20 @@ private fun OverviewCard(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Text(
-                text = stringResource(R.string.label_next_active_alarm, formatNextTrigger(context, nextTriggerAt)),
-                style = MaterialTheme.typography.bodyLarge
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_next_active_alarm, formatNextTrigger(context, nextTriggerAt)),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OverviewMetric(
                     title = stringResource(R.string.label_all_alarms),
@@ -407,7 +418,12 @@ private fun OverviewMetric(
     value: String,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f)
+        )
+    ) {
         Column(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -429,12 +445,19 @@ private fun PermissionCard(
     onRequestExactAlarmPermission: () -> Unit,
     onRequestNotificationPermission: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(stringResource(R.string.label_permissions), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.label_permissions),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
             Text(
                 stringResource(
                     R.string.label_exact_alarms,
@@ -447,14 +470,20 @@ private fun PermissionCard(
                     stringResource(if (notificationsEnabled) R.string.label_enabled else R.string.label_disabled)
                 )
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!exactAlarmEnabled) {
-                    OutlinedButton(onClick = onRequestExactAlarmPermission) {
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onRequestExactAlarmPermission
+                    ) {
                         Text(stringResource(R.string.action_enable_exact_alarms))
                     }
                 }
                 if (!notificationsEnabled) {
-                    OutlinedButton(onClick = onRequestNotificationPermission) {
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onRequestNotificationPermission
+                    ) {
                         Text(stringResource(R.string.action_enable_notifications))
                     }
                 }
@@ -465,13 +494,39 @@ private fun PermissionCard(
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+    }
 }
 
 @Composable
 private fun EmptyState(text: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Text(text, modifier = Modifier.padding(16.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Text(
+            text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -484,11 +539,19 @@ private fun UpcomingAlarmCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onOpen)
+            .clickable(onClick = onOpen),
+        colors = CardDefaults.cardColors(
+            containerColor = if (alarm.isRoutineAlarm) {
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -497,21 +560,38 @@ private fun UpcomingAlarmCard(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) })
+                    Text(
+                        alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) },
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
+                StatusBadge(
+                    text = if (alarm.isRoutineAlarm) {
+                        stringResource(R.string.label_source_routine_alarm, alarm.routineGroupName.orEmpty())
+                    } else {
+                        stringResource(R.string.label_source_standard_alarm)
+                    },
+                    highlighted = alarm.isRoutineAlarm
+                )
+            }
+            Text(
+                formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
                 OutlinedButton(onClick = onOpen) {
                     Text(stringResource(R.string.status_open))
                 }
             }
-            Text(
-                if (alarm.isRoutineAlarm) {
-                    stringResource(R.string.label_source_routine_alarm, alarm.routineGroupName.orEmpty())
-                } else {
-                    stringResource(R.string.label_source_standard_alarm)
-                }
-            )
-            Text(formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays))
-            Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
         }
     }
 }
@@ -525,30 +605,141 @@ private fun AlarmCard(
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (alarm.enabled) {
+                MaterialTheme.colorScheme.surface
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = formatAlarmTime(alarm.hour, alarm.minute),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) })
+                    Text(
+                        alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) },
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
-                Switch(checked = alarm.enabled, onCheckedChange = onToggle)
+                Column(horizontalAlignment = Alignment.End) {
+                    StatusBadge(
+                        text = stringResource(
+                            if (alarm.enabled) R.string.label_enabled else R.string.label_disabled
+                        ),
+                        highlighted = alarm.enabled
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Switch(checked = alarm.enabled, onCheckedChange = onToggle)
+                }
             }
-            Text(formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays))
-            Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
-                OutlinedButton(onClick = onMove) { Text(stringResource(R.string.action_move)) }
-                OutlinedButton(onClick = onDelete) {
+            Text(
+                formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onEdit
+                ) { Text(stringResource(R.string.action_edit)) }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onMove
+                ) { Text(stringResource(R.string.action_move)) }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onDelete
+                ) {
                     Icon(Icons.Filled.Delete, contentDescription = null)
                     Text(stringResource(R.string.action_delete))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutineGroupCard(
+    group: RoutineGroupSummary,
+    onOpen: () -> Unit,
+    onToggle: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onOpen() },
+        colors = CardDefaults.cardColors(
+            containerColor = if (group.enabled) {
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = group.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.label_active_of_total,
+                            group.activeCount,
+                            group.alarmCount,
+                            formatNextTrigger(context, group.nextTriggerAt)
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    StatusBadge(
+                        text = stringResource(
+                            if (group.enabled) R.string.label_enabled else R.string.label_disabled
+                        ),
+                        highlighted = group.enabled
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Switch(
+                        checked = group.enabled,
+                        onCheckedChange = onToggle
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                OutlinedButton(onClick = onOpen) {
+                    Text(stringResource(R.string.action_open_group))
+                    Icon(Icons.Filled.ArrowForward, contentDescription = null)
                 }
             }
         }
@@ -592,6 +783,33 @@ private fun MoveToRoutineGroupDialog(
             }
         }
     )
+}
+
+@Composable
+private fun StatusBadge(
+    text: String,
+    highlighted: Boolean
+) {
+    Surface(
+        color = if (highlighted) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        contentColor = if (highlighted) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        shape = RoundedCornerShape(999.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }
 
 @Composable
