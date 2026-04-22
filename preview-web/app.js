@@ -471,6 +471,64 @@ function exportJson() {
   URL.revokeObjectURL(url);
 }
 
+function bindDynamicInteractions() {
+  document.querySelectorAll('[data-action="toggle-weekday"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      button.classList.toggle("active");
+    });
+  });
+
+  document.querySelectorAll('[data-action="open-group"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedRoutineId = button.dataset.id;
+      renderAll();
+    });
+  });
+
+  document.querySelectorAll('[data-action="edit-group"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      openRoutineEditor(button.dataset.id);
+    });
+  });
+
+  document.querySelectorAll('[data-action="edit-alarm"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      const alarm = state.alarms.find((item) => item.id === button.dataset.id);
+      if (!alarm) return;
+      openAlarmEditor({
+        alarmType: alarm.type,
+        alarmId: button.dataset.id,
+        routineGroupId: alarm.routineGroupId,
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-action="delete-alarm"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      state.alarms = state.alarms.filter((alarm) => alarm.id !== button.dataset.id);
+      renderAll();
+    });
+  });
+
+  document.querySelectorAll('[data-action="toggle-group"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      const routine = group(input.dataset.id);
+      if (!routine) return;
+      routine.enabled = input.checked;
+      renderAll();
+    });
+  });
+
+  document.querySelectorAll('[data-action="toggle-alarm"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      const alarm = state.alarms.find((item) => item.id === input.dataset.id);
+      if (!alarm) return;
+      alarm.enabled = input.checked;
+      renderAll();
+    });
+  });
+}
+
 function renderAll() {
   saveState();
   renderHero();
@@ -480,31 +538,10 @@ function renderAll() {
   renderRoutineGroups();
   renderTimeline();
   renderDetail();
+  bindDynamicInteractions();
   els.exactPermissionToggle.checked = state.permissions.exactAlarm;
   els.notificationPermissionToggle.checked = state.permissions.notifications;
 }
-
-document.addEventListener("click", (event) => {
-  const target = event.target.closest("[data-action]");
-  if (!target) return;
-  const { action, id, day } = target.dataset;
-  if (action === "toggle-weekday") return target.classList.toggle("active");
-  if (action === "open-group") state.selectedRoutineId = id;
-  if (action === "edit-group") return openRoutineEditor(id);
-  if (action === "edit-alarm") {
-    const alarm = state.alarms.find((item) => item.id === id);
-    return openAlarmEditor({ alarmType: alarm.type, alarmId: id, routineGroupId: alarm.routineGroupId });
-  }
-  if (action === "delete-alarm") state.alarms = state.alarms.filter((alarm) => alarm.id !== id);
-  renderAll();
-});
-
-document.addEventListener("change", (event) => {
-  const action = event.target.dataset.action;
-  if (action === "toggle-group") group(event.target.dataset.id).enabled = event.target.checked;
-  if (action === "toggle-alarm") state.alarms.find((alarm) => alarm.id === event.target.dataset.id).enabled = event.target.checked;
-  if (action) renderAll();
-});
 
 els.detailGroupToggle.addEventListener("change", (event) => {
   const routine = group(state.selectedRoutineId);
