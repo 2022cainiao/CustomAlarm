@@ -57,10 +57,12 @@ fun AlarmEditorScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
         }
         viewModel.updateRingtone(uri?.toString())
     }
@@ -329,10 +331,14 @@ private fun resolveRingtoneLabel(context: android.content.Context, ringtoneUri: 
         return context.getString(R.string.label_system_default)
     }
 
-    val uri = Uri.parse(ringtoneUri)
-    return RingtoneManager.getRingtone(context, uri)?.getTitle(context)
-        ?: uri.lastPathSegment
-        ?: context.getString(R.string.label_system_default)
+    return runCatching {
+        val uri = Uri.parse(ringtoneUri)
+        RingtoneManager.getRingtone(context, uri)?.getTitle(context)
+            ?: uri.lastPathSegment
+            ?: context.getString(R.string.label_system_default)
+    }.getOrElse {
+        context.getString(R.string.label_system_default)
+    }
 }
 
 private fun extractPickedRingtoneUri(data: Intent?): Uri? {

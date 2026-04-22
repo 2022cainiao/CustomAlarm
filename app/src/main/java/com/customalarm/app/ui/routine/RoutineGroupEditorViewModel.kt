@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.customalarm.app.R
 import com.customalarm.app.AppContainer
 import com.customalarm.app.domain.RoutineGroupDraft
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 data class RoutineGroupEditorUiState(
@@ -59,14 +60,22 @@ class RoutineGroupEditorViewModel(
         }
         viewModelScope.launch {
             uiState = uiState.copy(isSaving = true, errorMessageRes = null)
-            container.alarmCoordinator.saveRoutineGroup(
-                RoutineGroupDraft(
-                    id = uiState.id,
-                    name = uiState.name,
-                    enabled = uiState.enabled
+            try {
+                container.alarmCoordinator.saveRoutineGroup(
+                    RoutineGroupDraft(
+                        id = uiState.id,
+                        name = uiState.name,
+                        enabled = uiState.enabled
+                    )
                 )
-            )
-            uiState = uiState.copy(isSaving = false, saved = true)
+                uiState = uiState.copy(isSaving = false, saved = true)
+            } catch (exception: Exception) {
+                if (exception is CancellationException) throw exception
+                uiState = uiState.copy(
+                    isSaving = false,
+                    errorMessageRes = R.string.error_save_routine_group_failed
+                )
+            }
         }
     }
 

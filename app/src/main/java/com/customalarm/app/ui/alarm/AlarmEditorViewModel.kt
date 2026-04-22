@@ -12,6 +12,7 @@ import com.customalarm.app.data.model.AlarmType
 import com.customalarm.app.data.model.RoutineGroupEntity
 import com.customalarm.app.domain.AlarmCoordinator
 import com.customalarm.app.domain.AlarmDraft
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -165,27 +166,35 @@ class AlarmEditorViewModel(
 
         viewModelScope.launch {
             uiState = uiState.copy(isSaving = true, errorMessageRes = null)
-            coordinator.saveAlarm(
-                AlarmDraft(
-                    id = uiState.id,
-                    type = uiState.type,
-                    routineGroupId = if (uiState.type == AlarmType.ROUTINE) uiState.routineGroupId else null,
-                    hour = hour,
-                    minute = minute,
-                    repeatDays = uiState.repeatDays.sorted(),
-                    holidayAwareWorkdays = uiState.holidayAwareWorkdays,
-                    label = uiState.label,
-                    ringtoneUri = uiState.ringtoneUri,
-                    vibrate = uiState.vibrate,
-                    snoozeEnabled = uiState.snoozeEnabled,
-                    snoozeMinutes = snooze ?: 10,
-                    enabled = uiState.enabled
+            try {
+                coordinator.saveAlarm(
+                    AlarmDraft(
+                        id = uiState.id,
+                        type = uiState.type,
+                        routineGroupId = if (uiState.type == AlarmType.ROUTINE) uiState.routineGroupId else null,
+                        hour = hour,
+                        minute = minute,
+                        repeatDays = uiState.repeatDays.sorted(),
+                        holidayAwareWorkdays = uiState.holidayAwareWorkdays,
+                        label = uiState.label,
+                        ringtoneUri = uiState.ringtoneUri,
+                        vibrate = uiState.vibrate,
+                        snoozeEnabled = uiState.snoozeEnabled,
+                        snoozeMinutes = snooze ?: 10,
+                        enabled = uiState.enabled
+                    )
                 )
-            )
-            if (uiState.snoozeEnabled && snooze != null) {
-                container.appSettingsRepository.setDefaultSnoozeMinutes(snooze)
+                if (uiState.snoozeEnabled && snooze != null) {
+                    container.appSettingsRepository.setDefaultSnoozeMinutes(snooze)
+                }
+                uiState = uiState.copy(isSaving = false, saved = true)
+            } catch (exception: Exception) {
+                if (exception is CancellationException) throw exception
+                uiState = uiState.copy(
+                    isSaving = false,
+                    errorMessageRes = R.string.error_save_alarm_failed
+                )
             }
-            uiState = uiState.copy(isSaving = false, saved = true)
         }
     }
 

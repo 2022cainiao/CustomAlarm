@@ -11,6 +11,7 @@ import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import com.customalarm.app.appContainer
 import com.customalarm.app.domain.AlarmRingingController
 import com.customalarm.app.ui.ringing.RingingActivity
@@ -44,35 +45,40 @@ class AlarmPlaybackService : Service() {
     private fun handleStart(intent: Intent) {
         val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1L)
         if (alarmId <= 0L) return
-        currentAlarmId = alarmId
-        currentSnoozeMinutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, 10)
-        canSnooze = intent.getBooleanExtra(EXTRA_SNOOZE_ENABLED, true)
-        val label = intent.getStringExtra(EXTRA_LABEL).orEmpty()
-        val ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI)
-        val vibrate = intent.getBooleanExtra(EXTRA_VIBRATE, true)
+        try {
+            currentAlarmId = alarmId
+            currentSnoozeMinutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, 10)
+            canSnooze = intent.getBooleanExtra(EXTRA_SNOOZE_ENABLED, true)
+            val label = intent.getStringExtra(EXTRA_LABEL).orEmpty()
+            val ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI)
+            val vibrate = intent.getBooleanExtra(EXTRA_VIBRATE, true)
 
-        startForeground(
-            AlarmRingingController.NOTIFICATION_ID_BASE + alarmId.toInt(),
-            appContainer.alarmRingingController.createNotification(
-                alarmId = alarmId,
-                label = label,
-                snoozeEnabled = canSnooze,
-                snoozeMinutes = currentSnoozeMinutes
+            startForeground(
+                AlarmRingingController.NOTIFICATION_ID_BASE + alarmId.toInt(),
+                appContainer.alarmRingingController.createNotification(
+                    alarmId = alarmId,
+                    label = label,
+                    snoozeEnabled = canSnooze,
+                    snoozeMinutes = currentSnoozeMinutes
+                )
             )
-        )
-        playRingtone(ringtoneUri)
-        if (vibrate) {
-            startVibration()
+            playRingtone(ringtoneUri)
+            if (vibrate) {
+                startVibration()
+            }
+            startActivity(
+                RingingActivity.createIntent(
+                    context = this,
+                    alarmId = alarmId,
+                    label = label,
+                    snoozeEnabled = canSnooze,
+                    snoozeMinutes = currentSnoozeMinutes
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            )
+        } catch (exception: Exception) {
+            Log.e(TAG, "Failed to start alarm playback for $alarmId", exception)
+            stopAlarm()
         }
-        startActivity(
-            RingingActivity.createIntent(
-                context = this,
-                alarmId = alarmId,
-                label = label,
-                snoozeEnabled = canSnooze,
-                snoozeMinutes = currentSnoozeMinutes
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        )
     }
 
     private fun playRingtone(ringtoneUri: String?) {
@@ -132,6 +138,7 @@ class AlarmPlaybackService : Service() {
         private const val EXTRA_VIBRATE = "extra_vibrate"
         private const val EXTRA_SNOOZE_ENABLED = "extra_snooze_enabled"
         private const val EXTRA_SNOOZE_MINUTES = "extra_snooze_minutes"
+        private const val TAG = "AlarmPlaybackService"
 
         fun createStartIntent(
             context: Context,
@@ -165,4 +172,3 @@ class AlarmPlaybackService : Service() {
             }
     }
 }
-

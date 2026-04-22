@@ -107,6 +107,8 @@
     <string name="error_choose_routine_group">Choose a routine group first.</string>
     <string name="error_snooze_range">Snooze must be between 1 and 30 minutes.</string>
     <string name="error_enter_routine_name">Enter a routine group name.</string>
+    <string name="error_save_alarm_failed">Could not save this alarm right now. Please try again.</string>
+    <string name="error_save_routine_group_failed">Could not save this routine group right now. Please try again.</string>
     <string name="warning_holiday_calendar_expired">Local holiday data has expired and public JSON sync is currently unavailable. Official workday alarms may be inaccurate until sync succeeds.</string>
 
     <string name="alarm_channel_name">Alarm alerts</string>
