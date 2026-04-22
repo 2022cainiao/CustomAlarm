@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
+import com.customalarm.app.data.repository.AppLanguage
 import com.customalarm.app.util.formatAlarmTime
 import com.customalarm.app.util.formatInstantOrDash
 import com.customalarm.app.util.formatLocalDate
@@ -68,6 +69,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var moveAlarmId by remember { mutableStateOf<Long?>(null) }
+    var languageDialogVisible by remember { mutableStateOf(false) }
 
     if (moveAlarmId != null) {
         MoveToRoutineGroupDialog(
@@ -76,6 +78,17 @@ fun HomeScreen(
             onMoveToGroup = { targetGroupId ->
                 moveAlarmId?.let { viewModel.moveAlarmToRoutineGroup(it, targetGroupId) }
                 moveAlarmId = null
+            }
+        )
+    }
+
+    if (languageDialogVisible) {
+        AppLanguageDialog(
+            selectedLanguage = uiState.appLanguage,
+            onDismiss = { languageDialogVisible = false },
+            onSelectLanguage = { language ->
+                viewModel.setAppLanguage(language)
+                languageDialogVisible = false
             }
         )
     }
@@ -108,6 +121,13 @@ fun HomeScreen(
                     notificationsEnabled = notificationsEnabled,
                     onRequestExactAlarmPermission = onRequestExactAlarmPermission,
                     onRequestNotificationPermission = onRequestNotificationPermission
+                )
+            }
+
+            item {
+                AppLanguageCard(
+                    appLanguage = uiState.appLanguage,
+                    onChangeLanguage = { languageDialogVisible = true }
                 )
             }
 
@@ -208,6 +228,75 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+private fun AppLanguageCard(
+    appLanguage: AppLanguage,
+    onChangeLanguage: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.label_app_language),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(
+                    R.string.label_current_language,
+                    languageLabel(appLanguage)
+                )
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onChangeLanguage) {
+                    Text(stringResource(R.string.action_change_language))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppLanguageDialog(
+    selectedLanguage: AppLanguage,
+    onDismiss: () -> Unit,
+    onSelectLanguage: (AppLanguage) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.label_app_language)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppLanguage.entries.forEach { language ->
+                    OutlinedButton(
+                        onClick = { onSelectLanguage(language) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val label = languageLabel(language)
+                        val finalText = if (language == selectedLanguage) {
+                            stringResource(R.string.label_selected_language, label)
+                        } else {
+                            label
+                        }
+                        Text(finalText)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text(stringResource(R.string.status_cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -537,4 +626,13 @@ private fun MoveToRoutineGroupDialog(
             }
         }
     )
+}
+
+@Composable
+private fun languageLabel(language: AppLanguage): String {
+    return when (language) {
+        AppLanguage.SYSTEM -> stringResource(R.string.option_language_system)
+        AppLanguage.ZH_CN -> stringResource(R.string.option_language_zh_cn)
+        AppLanguage.EN -> stringResource(R.string.option_language_en)
+    }
 }

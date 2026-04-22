@@ -19,6 +19,7 @@
     <string name="action_use_default">Use default</string>
     <string name="action_enable_exact_alarms">Enable exact alarms</string>
     <string name="action_enable_notifications">Enable notifications</string>
+    <string name="action_change_language">Change language</string>
     <string name="action_sync_holiday_calendar">Sync holiday calendar</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_save_alarm">Save alarm</string>
@@ -26,6 +27,9 @@
     <string name="action_snooze_minutes">Snooze %1$d min</string>
 
     <string name="label_permissions">Permissions</string>
+    <string name="label_app_language">App language</string>
+    <string name="label_current_language">Current language: %1$s</string>
+    <string name="label_selected_language">%1$s (Selected)</string>
     <string name="label_holiday_calendar">Holiday calendar</string>
     <string name="label_holiday_coverage">Data covers through: %1$s</string>
     <string name="label_holiday_source">Current source: %1$s</string>
@@ -71,6 +75,9 @@
     <string name="label_routine_group_name">Routine name</string>
     <string name="label_move_alarm">Move alarm</string>
     <string name="label_move_alarm_message">Choose where this alarm should live next.</string>
+    <string name="option_language_system">System default</string>
+    <string name="option_language_zh_cn">Simplified Chinese</string>
+    <string name="option_language_en">English</string>
 
     <string name="screen_home_title">Custom Alarm</string>
     <string name="screen_add_alarm">Add alarm</string>

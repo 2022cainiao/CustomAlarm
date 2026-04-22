@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.customalarm.app.data.repository.AppLanguage
+import com.customalarm.app.data.repository.AppSettingsRepository
 import com.customalarm.app.ui.NavRoutes
 import com.customalarm.app.ui.alarm.AlarmEditorScreen
 import com.customalarm.app.ui.alarm.AlarmEditorViewModel
@@ -70,6 +73,11 @@ private fun AlarmApp() {
     }
     val notificationsEnabled = remember(permissionRefreshTick) {
         notificationsEnabled(context)
+    }
+    val appLanguage by container.appSettingsRepository.appLanguage.collectAsState(initial = AppLanguage.SYSTEM)
+
+    LaunchedEffect(appLanguage) {
+        AppSettingsRepository.applyAppLanguage(appLanguage)
     }
 
     DisposableEffect(lifecycleOwner) {

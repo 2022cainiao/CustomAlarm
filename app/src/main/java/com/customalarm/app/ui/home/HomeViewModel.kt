@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.customalarm.app.AppContainer
 import com.customalarm.app.data.model.AlarmEntity
 import com.customalarm.app.data.model.RoutineGroupWithAlarms
+import com.customalarm.app.data.repository.AppLanguage
+import com.customalarm.app.data.repository.AppSettingsRepository
 import com.customalarm.app.domain.AlarmCoordinator
 import com.customalarm.app.domain.HolidayCalendarSyncRepository
 import com.customalarm.app.domain.HolidayCalendarSyncStatus
@@ -54,6 +56,7 @@ data class HomeUiState(
     val routineGroups: List<RoutineGroupSummary> = emptyList(),
     val upcomingAlarms: List<UpcomingAlarmSummary> = emptyList(),
     val holidayCalendar: HolidayCalendarUiState = HolidayCalendarUiState(),
+    val appLanguage: AppLanguage = AppLanguage.SYSTEM,
     val totalAlarmCount: Int = 0,
     val enabledNormalCount: Int = 0,
     val routineGroupCount: Int = 0,
@@ -64,6 +67,7 @@ data class HomeUiState(
 
 class HomeViewModel(
     private val coordinator: AlarmCoordinator,
+    private val appSettingsRepository: AppSettingsRepository,
     private val holidayCalendarSyncRepository: HolidayCalendarSyncRepository,
     private val homeStateFlow: StateFlow<HomeUiState>
 ) : ViewModel() {
@@ -111,13 +115,20 @@ class HomeViewModel(
         }
     }
 
+    fun setAppLanguage(language: AppLanguage) {
+        viewModelScope.launch {
+            appSettingsRepository.setAppLanguage(language)
+        }
+    }
+
     companion object {
         fun factory(container: AppContainer): ViewModelProvider.Factory {
             val state = combine(
                 container.alarmRepository.observeNormalAlarms(),
                 container.routineGroupRepository.observeRoutineGroupsWithAlarms(),
-                container.holidayCalendarSyncRepository.status
-            ) { normalAlarms, routineGroups, holidayStatus ->
+                container.holidayCalendarSyncRepository.status,
+                container.appSettingsRepository.appLanguage
+            ) { normalAlarms, routineGroups, holidayStatus, appLanguage ->
                 val sortedNormalAlarms = normalAlarms.sortedWith(
                     compareBy<AlarmEntity> { it.nextTriggerAt ?: Long.MAX_VALUE }
                         .thenBy { it.id }
@@ -172,6 +183,7 @@ class HomeViewModel(
                     routineGroups = routineSummaries,
                     upcomingAlarms = upcomingAlarms,
                     holidayCalendar = holidayStatus.toUiState(),
+                    appLanguage = appLanguage,
                     totalAlarmCount = sortedNormalAlarms.size + routineGroups.sumOf { it.alarms.size },
                     enabledNormalCount = sortedNormalAlarms.count { it.enabled },
                     routineGroupCount = routineSummaries.size,
@@ -189,6 +201,7 @@ class HomeViewModel(
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return HomeViewModel(
                         coordinator = container.alarmCoordinator,
+                        appSettingsRepository = container.appSettingsRepository,
                         holidayCalendarSyncRepository = container.holidayCalendarSyncRepository,
                         homeStateFlow = state
                     ) as T
