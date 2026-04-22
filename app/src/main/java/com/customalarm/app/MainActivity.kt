@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,13 +15,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,8 +30,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.customalarm.app.data.repository.AppLanguage
-import com.customalarm.app.data.repository.AppSettingsRepository
 import com.customalarm.app.ui.NavRoutes
 import com.customalarm.app.ui.alarm.AlarmEditorScreen
 import com.customalarm.app.ui.alarm.AlarmEditorViewModel
@@ -44,7 +41,7 @@ import com.customalarm.app.ui.routine.RoutineGroupEditorScreen
 import com.customalarm.app.ui.routine.RoutineGroupEditorViewModel
 import com.customalarm.app.ui.theme.CustomAlarmTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -74,12 +71,6 @@ private fun AlarmApp() {
     val notificationsEnabled = remember(permissionRefreshTick) {
         notificationsEnabled(context)
     }
-    val appLanguage by container.appSettingsRepository.appLanguage.collectAsState(initial = AppLanguage.SYSTEM)
-
-    LaunchedEffect(appLanguage) {
-        AppSettingsRepository.applyAppLanguage(appLanguage)
-    }
-
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
