@@ -1,6 +1,8 @@
 <resources>
-    <style name="Theme.CustomAlarm" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.CustomAlarm" parent="Theme.Material3.DayNight">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 </resources>
