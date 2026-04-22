@@ -505,8 +505,16 @@ function renderRoutineGroups() {
     ? state.routineGroups
         .map((routine) => {
           const stats = routineStats(routine);
+          const selectedClass = routine.id === state.selectedRoutineId ? " is-selected" : "";
           return `
-            <article class="routine-card">
+            <article
+              class="routine-card${selectedClass}"
+              data-action="open-group"
+              data-id="${routine.id}"
+              tabindex="0"
+              role="button"
+              aria-pressed="${routine.id === state.selectedRoutineId}"
+            >
               <div class="routine-top">
                 <div>
                   <strong>${routine.name}</strong>
@@ -875,6 +883,14 @@ hydrateStaticText();
 
 document.addEventListener("click", (event) => handleActionClick(event.target));
 document.addEventListener("change", (event) => handleToggleChange(event.target));
+document.addEventListener("keydown", (event) => {
+  const actionTarget = event.target.closest?.('[data-action="open-group"]');
+  if (!actionTarget) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  state.selectedRoutineId = actionTarget.dataset.id;
+  renderAll();
+});
 
 els.detailGroupToggle.addEventListener("change", (event) => {
   const routine = getGroup(state.selectedRoutineId);
