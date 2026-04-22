@@ -25,6 +25,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -44,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
 import com.customalarm.app.util.formatAlarmTime
+import com.customalarm.app.util.formatInstantOrDash
+import com.customalarm.app.util.formatLocalDate
 import com.customalarm.app.util.formatNextTrigger
 import com.customalarm.app.util.formatRepeatDays
 
@@ -56,6 +59,7 @@ fun HomeScreen(
     notificationsEnabled: Boolean,
     onRequestExactAlarmPermission: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
+    onSyncHolidayCalendar: () -> Unit,
     onAddNormalAlarm: () -> Unit,
     onAddRoutineGroup: () -> Unit,
     onEditAlarm: (Long, Long?) -> Unit,
@@ -104,6 +108,13 @@ fun HomeScreen(
                     notificationsEnabled = notificationsEnabled,
                     onRequestExactAlarmPermission = onRequestExactAlarmPermission,
                     onRequestNotificationPermission = onRequestNotificationPermission
+                )
+            }
+
+            item {
+                HolidayCalendarCard(
+                    holidayCalendar = uiState.holidayCalendar,
+                    onSyncHolidayCalendar = onSyncHolidayCalendar
                 )
             }
 
@@ -193,6 +204,85 @@ fun HomeScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HolidayCalendarCard(
+    holidayCalendar: HolidayCalendarUiState,
+    onSyncHolidayCalendar: () -> Unit
+) {
+    val warningActive = holidayCalendar.shouldWarnSourceUnavailable
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (warningActive) {
+                MaterialTheme.colorScheme.errorContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.label_holiday_calendar),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(
+                    R.string.label_holiday_coverage,
+                    formatLocalDate(holidayCalendar.coverageEnd)
+                )
+            )
+            Text(
+                text = stringResource(
+                    R.string.label_holiday_source,
+                    holidayCalendar.sourceName ?: stringResource(R.string.label_unknown)
+                )
+            )
+            Text(
+                text = stringResource(
+                    R.string.label_holiday_last_sync,
+                    formatInstantOrDash(holidayCalendar.syncedAt)
+                )
+            )
+            if (holidayCalendar.shouldWarnSourceUnavailable) {
+                Text(
+                    text = stringResource(R.string.warning_holiday_calendar_expired),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else if (!holidayCalendar.lastErrorMessage.isNullOrBlank() && holidayCalendar.isExpired.not()) {
+                Text(
+                    text = stringResource(R.string.label_holiday_sync_failed_using_local),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onSyncHolidayCalendar,
+                    enabled = !holidayCalendar.isSyncing
+                ) {
+                    Text(
+                        stringResource(
+                            if (holidayCalendar.isSyncing) {
+                                R.string.status_syncing
+                            } else {
+                                R.string.action_sync_holiday_calendar
+                            }
+                        )
+                    )
                 }
             }
         }

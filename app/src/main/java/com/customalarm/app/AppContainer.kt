@@ -12,6 +12,7 @@ import com.customalarm.app.domain.AlarmCoordinator
 import com.customalarm.app.domain.AlarmRingingController
 import com.customalarm.app.domain.AlarmScheduler
 import com.customalarm.app.domain.HolidayCalendarStore
+import com.customalarm.app.domain.HolidayCalendarSyncRepository
 import com.customalarm.app.domain.NextTriggerCalculator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ class AppContainer(context: Context) {
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val holidayCalendarStore = HolidayCalendarStore(applicationContext)
+    val holidayCalendarSyncRepository = HolidayCalendarSyncRepository(holidayCalendarStore)
     val nextTriggerCalculator = NextTriggerCalculator(
         holidayCalendarProvider = holidayCalendarStore::currentCalendar
     )

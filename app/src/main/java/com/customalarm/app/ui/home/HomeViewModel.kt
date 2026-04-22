@@ -7,6 +7,8 @@ import com.customalarm.app.AppContainer
 import com.customalarm.app.data.model.AlarmEntity
 import com.customalarm.app.data.model.RoutineGroupWithAlarms
 import com.customalarm.app.domain.AlarmCoordinator
+import com.customalarm.app.domain.HolidayCalendarSyncRepository
+import com.customalarm.app.domain.HolidayCalendarSyncStatus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,10 +38,22 @@ data class UpcomingAlarmSummary(
     val routineGroupName: String? = null
 )
 
+data class HolidayCalendarUiState(
+    val coverageEnd: java.time.LocalDate? = null,
+    val sourceName: String? = null,
+    val sourceUrl: String? = null,
+    val syncedAt: java.time.Instant? = null,
+    val isExpired: Boolean = false,
+    val isSyncing: Boolean = false,
+    val lastErrorMessage: String? = null,
+    val shouldWarnSourceUnavailable: Boolean = false
+)
+
 data class HomeUiState(
     val normalAlarms: List<AlarmEntity> = emptyList(),
     val routineGroups: List<RoutineGroupSummary> = emptyList(),
     val upcomingAlarms: List<UpcomingAlarmSummary> = emptyList(),
+    val holidayCalendar: HolidayCalendarUiState = HolidayCalendarUiState(),
     val totalAlarmCount: Int = 0,
     val enabledNormalCount: Int = 0,
     val routineGroupCount: Int = 0,
@@ -50,9 +64,19 @@ data class HomeUiState(
 
 class HomeViewModel(
     private val coordinator: AlarmCoordinator,
+    private val holidayCalendarSyncRepository: HolidayCalendarSyncRepository,
     private val homeStateFlow: StateFlow<HomeUiState>
 ) : ViewModel() {
     val uiState: StateFlow<HomeUiState> = homeStateFlow
+
+    init {
+        viewModelScope.launch {
+            val result = holidayCalendarSyncRepository.syncIfNeeded()
+            if (result.succeeded && result.calendarChanged) {
+                coordinator.rebuildSchedules()
+            }
+        }
+    }
 
     fun toggleAlarm(alarmId: Long, enabled: Boolean) {
         viewModelScope.launch {
@@ -78,12 +102,22 @@ class HomeViewModel(
         }
     }
 
+    fun syncHolidayCalendar() {
+        viewModelScope.launch {
+            val result = holidayCalendarSyncRepository.syncNow()
+            if (result.succeeded && result.calendarChanged) {
+                coordinator.rebuildSchedules()
+            }
+        }
+    }
+
     companion object {
         fun factory(container: AppContainer): ViewModelProvider.Factory {
             val state = combine(
                 container.alarmRepository.observeNormalAlarms(),
-                container.routineGroupRepository.observeRoutineGroupsWithAlarms()
-            ) { normalAlarms, routineGroups ->
+                container.routineGroupRepository.observeRoutineGroupsWithAlarms(),
+                container.holidayCalendarSyncRepository.status
+            ) { normalAlarms, routineGroups, holidayStatus ->
                 val sortedNormalAlarms = normalAlarms.sortedWith(
                     compareBy<AlarmEntity> { it.nextTriggerAt ?: Long.MAX_VALUE }
                         .thenBy { it.id }
@@ -137,6 +171,7 @@ class HomeViewModel(
                     normalAlarms = sortedNormalAlarms,
                     routineGroups = routineSummaries,
                     upcomingAlarms = upcomingAlarms,
+                    holidayCalendar = holidayStatus.toUiState(),
                     totalAlarmCount = sortedNormalAlarms.size + routineGroups.sumOf { it.alarms.size },
                     enabledNormalCount = sortedNormalAlarms.count { it.enabled },
                     routineGroupCount = routineSummaries.size,
@@ -154,6 +189,7 @@ class HomeViewModel(
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return HomeViewModel(
                         coordinator = container.alarmCoordinator,
+                        holidayCalendarSyncRepository = container.holidayCalendarSyncRepository,
                         homeStateFlow = state
                     ) as T
                 }
@@ -172,5 +208,18 @@ private fun RoutineGroupWithAlarms.toSummary(): RoutineGroupSummary {
         alarmCount = alarms.size,
         activeCount = effectiveAlarms.size,
         nextTriggerAt = effectiveAlarms.mapNotNull { it.nextTriggerAt }.minOrNull()
+    )
+}
+
+private fun HolidayCalendarSyncStatus.toUiState(): HolidayCalendarUiState {
+    return HolidayCalendarUiState(
+        coverageEnd = coverageEnd,
+        sourceName = sourceName,
+        sourceUrl = sourceUrl,
+        syncedAt = syncedAt,
+        isExpired = isExpired,
+        isSyncing = isSyncing,
+        lastErrorMessage = lastErrorMessage,
+        shouldWarnSourceUnavailable = shouldWarnSourceUnavailable
     )
 }

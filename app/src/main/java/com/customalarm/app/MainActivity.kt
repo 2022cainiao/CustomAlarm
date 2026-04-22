@@ -115,6 +115,7 @@ private fun AlarmApp() {
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                     },
+                    onSyncHolidayCalendar = { viewModel.syncHolidayCalendar() },
                     onAddNormalAlarm = { navController.navigate(NavRoutes.alarmEditor()) },
                     onAddRoutineGroup = { navController.navigate(NavRoutes.routineEditor()) },
                     onEditAlarm = { alarmId, groupId ->

@@ -1,6 +1,8 @@
 {
   "version": "2026.2",
   "region": "CN",
+  "sourceName": "Bundled calendar",
+  "validThrough": "2026-10-10",
   "holidays": [
     "2026-01-01",
     "2026-01-02",

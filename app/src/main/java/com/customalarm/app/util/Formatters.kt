@@ -3,11 +3,13 @@ package com.customalarm.app.util
 import android.content.Context
 import com.customalarm.app.R
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 private val dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
+private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
 fun formatAlarmTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour, minute)
 
@@ -48,4 +50,11 @@ fun formatRingingClock(timestamp: Long = System.currentTimeMillis()): String {
     return Instant.ofEpochMilli(timestamp)
         .atZone(ZoneId.systemDefault())
         .format(timeFormatter)
+}
+
+fun formatLocalDate(date: LocalDate?): String = date?.format(dateFormatter) ?: "--"
+
+fun formatInstantOrDash(timestamp: Instant?): String {
+    if (timestamp == null) return "--"
+    return timestamp.atZone(ZoneId.systemDefault()).format(dateTimeFormatter)
 }
