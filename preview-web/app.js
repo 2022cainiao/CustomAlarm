@@ -1,5 +1,85 @@
 const STORAGE_KEY = "custom_alarm_preview_state_v1";
 
+const text = {
+  weekdays: [
+    [1, "周一"],
+    [2, "周二"],
+    [3, "周三"],
+    [4, "周四"],
+    [5, "周五"],
+    [6, "周六"],
+    [7, "周日"],
+  ],
+  repeatOnce: "仅一次",
+  repeatWorkdays: "工作日",
+  repeatWeekend: "周末",
+  repeatEveryday: "每天",
+  unnamedAlarm: "未命名闹钟",
+  effective: "生效中",
+  blocked: "未生效",
+  snooze: "贪睡",
+  vibrate: "震动",
+  nextAlarm: "下一次响铃",
+  none: "暂无",
+  noActiveAlarms: "当前没有生效中的闹钟",
+  routineGroups: "作息组数量",
+  routineGroupHint: "每个作息组都有独立的总开关。",
+  overviewTitle: "实时总览",
+  noActiveScheduled: "当前没有生效中的闹钟",
+  nextRingAt: "下一次响铃时间",
+  overviewCopy: "作息闹钟是否生效 = 作息组总开关 + 子闹钟开关。",
+  standardActive: "普通闹钟启用",
+  routineActive: "作息闹钟生效",
+  groupsEnabled: "作息组启用",
+  exactAlarm: "精确闹钟",
+  exactAlarmDesc: "精确系统调度能力",
+  notifications: "通知权限",
+  notificationsDesc: "响铃通知展示能力",
+  enabled: "已开启",
+  disabled: "已关闭",
+  currentlyInactive: "当前未生效",
+  edit: "编辑",
+  delete: "删除",
+  noStandardAlarms: "还没有普通闹钟",
+  createWithAdd: "可以通过上方按钮新增一个。",
+  next: "下次",
+  groupEnabled: "作息组已开启",
+  groupDisabled: "作息组已关闭",
+  alarmsInside: "组内闹钟",
+  openDetail: "查看详情",
+  editGroup: "编辑作息组",
+  noRoutineGroups: "还没有作息组",
+  standardAlarm: "普通闹钟",
+  routineAlarm: "作息闹钟",
+  noTimeline: "当前没有生效闹钟",
+  timelineHint: "启用普通闹钟或作息组后，这里会显示统一时间线。",
+  alarmsInsideCount: "组内闹钟",
+  effectiveCount: "当前生效",
+  noAlarmsYet: "还没有闹钟",
+  addFirstAlarm: "给这个作息组添加第一个闹钟吧。",
+  standardAlarmEditor: "普通闹钟",
+  routineAlarmEditor: "作息闹钟",
+  editAlarm: "编辑闹钟",
+  addAlarm: "新增闹钟",
+  label: "标签",
+  enableAfterSave: "保存后启用",
+  routineEditorHint: "作息闹钟是否生效，取决于作息组和子闹钟是否同时开启。",
+  standardEditorHint: "普通闹钟只受自身开关控制。",
+  routineGroupEditor: "作息组",
+  editRoutineGroup: "编辑作息组",
+  addRoutineGroup: "新建作息组",
+  routineName: "作息组名称",
+  enableGroupAfterSave: "保存后启用作息组",
+  routineOverwriteHint: "作息组总开关不会覆盖组内单个闹钟的开关状态。",
+  routineNameRequired: "请输入作息组名称。",
+  routineSaved: "作息组已保存。",
+  invalidTime: "时间输入不合法。",
+  alarmSaved: "闹钟已保存。",
+  deleted: "已删除。",
+  exportFileName: "custom-alarm-preview-state.json",
+  demoReset: "演示数据已重置。",
+};
+
 function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
@@ -11,15 +91,15 @@ function demoState() {
     permissions: { exactAlarm: true, notifications: true },
     selectedRoutineId: workdayId,
     routineGroups: [
-      { id: workdayId, name: "Workday routine", enabled: true },
-      { id: weekendId, name: "Weekend routine", enabled: false },
+      { id: workdayId, name: "工作日作息", enabled: true },
+      { id: weekendId, name: "周末作息", enabled: false },
     ],
     alarms: [
-      normalAlarm("Morning study", 6, 40, [1, 2, 3, 4, 5], true),
-      normalAlarm("Lunch break", 13, 10, [], false),
-      routineAlarm("Wake up", 7, 0, [1, 2, 3, 4, 5], workdayId, true),
-      routineAlarm("Leave home prep", 8, 5, [1, 2, 3, 4, 5], workdayId, true),
-      routineAlarm("Weekend wake-up", 9, 20, [6, 7], weekendId, true),
+      normalAlarm("早起学习", 6, 40, [1, 2, 3, 4, 5], true),
+      normalAlarm("午休提醒", 13, 10, [], false),
+      routineAlarm("起床", 7, 0, [1, 2, 3, 4, 5], workdayId, true),
+      routineAlarm("出门准备", 8, 5, [1, 2, 3, 4, 5], workdayId, true),
+      routineAlarm("周末起床", 9, 20, [6, 7], weekendId, true),
     ],
   };
 }
@@ -69,7 +149,7 @@ function normalizeState(rawState) {
 
   const routineGroups = rawState.routineGroups.map((routine) => ({
     id: routine.id || uid(),
-    name: routine.name || "Untitled routine",
+    name: routine.name || "未命名作息组",
     enabled: routine.enabled ?? true,
   }));
 
@@ -147,15 +227,7 @@ const els = {
   toast: $("#toast"),
 };
 
-const weekdays = [
-  [1, "Mon"],
-  [2, "Tue"],
-  [3, "Wed"],
-  [4, "Thu"],
-  [5, "Fri"],
-  [6, "Sat"],
-  [7, "Sun"],
-];
+const weekdays = text.weekdays;
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -178,10 +250,10 @@ function group(id) {
 
 function repeatText(days) {
   const sorted = [...days].sort((a, b) => a - b).join(",");
-  if (!sorted) return "One time";
-  if (sorted === "1,2,3,4,5") return "Workdays";
-  if (sorted === "6,7") return "Weekend";
-  if (sorted === "1,2,3,4,5,6,7") return "Every day";
+  if (!sorted) return text.repeatOnce;
+  if (sorted === "1,2,3,4,5") return text.repeatWorkdays;
+  if (sorted === "6,7") return text.repeatWeekend;
+  if (sorted === "1,2,3,4,5,6,7") return text.repeatEveryday;
   return sorted.split(",").map((day) => weekdays.find(([value]) => value === Number(day))?.[1]).join(" ");
 }
 
@@ -206,10 +278,10 @@ function routineStats(routine) {
 
 function alarmBadges(alarm) {
   return `
-    <span class="badge ${isEffective(alarm) ? "active" : "sleeping"}">${isEffective(alarm) ? "Effective" : "Blocked"}</span>
+    <span class="badge ${isEffective(alarm) ? "active" : "sleeping"}">${isEffective(alarm) ? text.effective : text.blocked}</span>
     <span class="badge">${repeatText(alarm.repeatDays)}</span>
-    ${alarm.snoozeEnabled ? `<span class="badge">Snooze ${alarm.snoozeMinutes}m</span>` : ""}
-    ${alarm.vibrate ? `<span class="badge">Vibrate</span>` : ""}
+    ${alarm.snoozeEnabled ? `<span class="badge">${text.snooze} ${alarm.snoozeMinutes} 分钟</span>` : ""}
+    ${alarm.vibrate ? `<span class="badge">${text.vibrate}</span>` : ""}
   `;
 }
 
@@ -217,14 +289,14 @@ function renderHero() {
   const next = upcoming()[0];
   els.heroStats.innerHTML = `
     <div class="stat-card">
-      <p class="panel-tag">Next alarm</p>
-      <strong>${next ? time(next.hour, next.minute) : "None"}</strong>
-      <div class="stat-meta">${next ? next.label || "Unnamed alarm" : "No active alarms"}</div>
+      <p class="panel-tag">${text.nextAlarm}</p>
+      <strong>${next ? time(next.hour, next.minute) : text.none}</strong>
+      <div class="stat-meta">${next ? next.label || text.unnamedAlarm : text.noActiveAlarms}</div>
     </div>
     <div class="stat-card">
-      <p class="panel-tag">Routine groups</p>
+      <p class="panel-tag">${text.routineGroups}</p>
       <strong>${state.routineGroups.length}</strong>
-      <div class="stat-meta">Each group has its own master switch.</div>
+      <div class="stat-meta">${text.routineGroupHint}</div>
     </div>
   `;
 }
@@ -235,25 +307,25 @@ function renderOverview() {
   const groupsEnabled = state.routineGroups.filter((item) => item.enabled).length;
   const next = upcoming()[0];
   els.overviewCard.innerHTML = `
-    <p class="screen-label">Live overview</p>
-    <h3>${next ? `Next ring at ${time(next.hour, next.minute)}` : "No active alarm scheduled"}</h3>
-    <p class="overview-copy">Routine alarm effective state = group switch + child alarm switch.</p>
+    <p class="screen-label">${text.overviewTitle}</p>
+    <h3>${next ? `${text.nextRingAt} ${time(next.hour, next.minute)}` : text.noActiveScheduled}</h3>
+    <p class="overview-copy">${text.overviewCopy}</p>
     <div class="overview-grid">
-      <div class="overview-chip"><span>Standard active</span><strong>${standardActive}</strong></div>
-      <div class="overview-chip"><span>Routine active</span><strong>${routineActive}</strong></div>
-      <div class="overview-chip"><span>Groups enabled</span><strong>${groupsEnabled}/${state.routineGroups.length}</strong></div>
+      <div class="overview-chip"><span>${text.standardActive}</span><strong>${standardActive}</strong></div>
+      <div class="overview-chip"><span>${text.routineActive}</span><strong>${routineActive}</strong></div>
+      <div class="overview-chip"><span>${text.groupsEnabled}</span><strong>${groupsEnabled}/${state.routineGroups.length}</strong></div>
     </div>
   `;
 }
 
 function renderPermissions() {
   els.permissionStrip.innerHTML = [
-    ["Exact alarm", state.permissions.exactAlarm, "Precise system scheduling"],
-    ["Notifications", state.permissions.notifications, "Ringing notification surface"],
+    [text.exactAlarm, state.permissions.exactAlarm, text.exactAlarmDesc],
+    [text.notifications, state.permissions.notifications, text.notificationsDesc],
   ].map(([title, enabled, desc]) => `
     <div class="permission-pill">
       <div><strong>${title}</strong><div class="alarm-meta">${desc}</div></div>
-      <span class="permission-status ${enabled ? "" : "off"}">${enabled ? "Enabled" : "Disabled"}</span>
+      <span class="permission-status ${enabled ? "" : "off"}">${enabled ? text.enabled : text.disabled}</span>
     </div>
   `).join("");
 }
@@ -264,8 +336,8 @@ function alarmCard(alarm, compact = false) {
       <div class="alarm-top">
         <div>
           <div class="alarm-time">${time(alarm.hour, alarm.minute)}</div>
-          <strong>${alarm.label || "Unnamed alarm"}</strong>
-          <div class="alarm-meta">${isEffective(alarm) ? repeatText(alarm.repeatDays) : "Currently inactive"}</div>
+          <strong>${alarm.label || text.unnamedAlarm}</strong>
+          <div class="alarm-meta">${isEffective(alarm) ? repeatText(alarm.repeatDays) : text.currentlyInactive}</div>
           <div class="badge-row">${alarmBadges(alarm)}</div>
         </div>
         <label class="switch">
@@ -274,8 +346,8 @@ function alarmCard(alarm, compact = false) {
         </label>
       </div>
       <div class="alarm-actions">
-        <button class="pill-button" data-action="edit-alarm" data-id="${alarm.id}">Edit</button>
-        <button class="pill-button" data-action="delete-alarm" data-id="${alarm.id}">Delete</button>
+        <button class="pill-button" data-action="edit-alarm" data-id="${alarm.id}">${text.edit}</button>
+        <button class="pill-button" data-action="delete-alarm" data-id="${alarm.id}">${text.delete}</button>
       </div>
     </article>
   `;
@@ -285,7 +357,7 @@ function renderNormalAlarms() {
   const alarms = state.alarms.filter((alarm) => alarm.type === "normal").sort(byTime);
   els.normalAlarmList.innerHTML = alarms.length
     ? alarms.map((alarm) => alarmCard(alarm)).join("")
-    : `<article class="alarm-card"><strong>No standard alarms yet</strong><div class="alarm-meta">Create one with the add button.</div></article>`;
+    : `<article class="alarm-card"><strong>${text.noStandardAlarms}</strong><div class="alarm-meta">${text.createWithAdd}</div></article>`;
 }
 
 function renderRoutineGroups() {
@@ -297,10 +369,10 @@ function renderRoutineGroups() {
           <div class="routine-top">
             <div>
               <strong>${routine.name}</strong>
-              <div class="routine-meta">${stats.active.length} effective alarms | next ${stats.next ? time(stats.next.hour, stats.next.minute) : "None"}</div>
+              <div class="routine-meta">${stats.active.length} 个生效闹钟 | ${text.next} ${stats.next ? time(stats.next.hour, stats.next.minute) : text.none}</div>
               <div class="badge-row">
-                <span class="badge ${routine.enabled ? "active" : "sleeping"}">${routine.enabled ? "Group enabled" : "Group disabled"}</span>
-                <span class="badge">${stats.alarms.length} alarms inside</span>
+                <span class="badge ${routine.enabled ? "active" : "sleeping"}">${routine.enabled ? text.groupEnabled : text.groupDisabled}</span>
+                <span class="badge">${stats.alarms.length} 个${text.alarmsInside}</span>
               </div>
             </div>
             <label class="switch">
@@ -309,20 +381,20 @@ function renderRoutineGroups() {
             </label>
           </div>
           <div class="routine-actions">
-            <button class="pill-button" data-action="open-group" data-id="${routine.id}">Open detail</button>
-            <button class="pill-button" data-action="edit-group" data-id="${routine.id}">Edit group</button>
+            <button class="pill-button" data-action="open-group" data-id="${routine.id}">${text.openDetail}</button>
+            <button class="pill-button" data-action="edit-group" data-id="${routine.id}">${text.editGroup}</button>
           </div>
         </article>
       `;
     }).join("")
-    : `<article class="routine-card"><strong>No routine groups yet</strong></article>`;
+    : `<article class="routine-card"><strong>${text.noRoutineGroups}</strong></article>`;
 }
 
 function renderTimeline() {
   const alarms = upcoming();
   els.timelineList.innerHTML = alarms.length
-    ? alarms.map((alarm) => `<article class="timeline-card"><strong>${time(alarm.hour, alarm.minute)} | ${alarm.label || "Unnamed alarm"}</strong><div class="timeline-meta">${alarm.type === "normal" ? "Standard alarm" : group(alarm.routineGroupId)?.name || "Routine"}</div></article>`).join("")
-    : `<article class="timeline-card"><strong>No active alarms</strong><div class="timeline-meta">Enable a standard alarm or routine group to populate this timeline.</div></article>`;
+    ? alarms.map((alarm) => `<article class="timeline-card"><strong>${time(alarm.hour, alarm.minute)} | ${alarm.label || text.unnamedAlarm}</strong><div class="timeline-meta">${alarm.type === "normal" ? text.standardAlarm : group(alarm.routineGroupId)?.name || text.routineAlarm}</div></article>`).join("")
+    : `<article class="timeline-card"><strong>${text.noTimeline}</strong><div class="timeline-meta">${text.timelineHint}</div></article>`;
 }
 
 function renderDetail() {
@@ -336,11 +408,11 @@ function renderDetail() {
   els.detailEmpty.classList.add("hidden");
   els.detailContent.classList.remove("hidden");
   els.detailTitle.textContent = routine.name;
-  els.detailSummary.textContent = `${stats.alarms.length} alarms inside | ${stats.active.length} effective`;
+  els.detailSummary.textContent = `${stats.alarms.length} 个${text.alarmsInsideCount} | ${stats.active.length} 个${text.effectiveCount}`;
   els.detailGroupToggle.checked = routine.enabled;
   els.detailAlarmList.innerHTML = stats.alarms.length
     ? stats.alarms.map((alarm) => alarmCard(alarm, true)).join("")
-    : `<article class="detail-alarm-card"><strong>No alarms yet</strong><div class="detail-subtext">Add the first alarm to this routine group.</div></article>`;
+    : `<article class="detail-alarm-card"><strong>${text.noAlarmsYet}</strong><div class="detail-subtext">${text.addFirstAlarm}</div></article>`;
 }
 
 function renderWeekdays(selected = []) {
@@ -357,10 +429,10 @@ function openAlarmEditor({ alarmType, alarmId = null, routineGroupId = null }) {
   editor.alarmType = alarmType;
   editor.editingId = alarmId;
   els.editorModal.classList.remove("hidden");
-  els.editorTag.textContent = alarmType === "normal" ? "Standard Alarm" : "Routine Alarm";
-  els.editorTitle.textContent = alarm ? "Edit alarm" : "Add alarm";
-  els.labelFieldTitle.textContent = "Label";
-  els.enabledFieldLabel.textContent = "Enable after save";
+  els.editorTag.textContent = alarmType === "normal" ? text.standardAlarmEditor : text.routineAlarmEditor;
+  els.editorTitle.textContent = alarm ? text.editAlarm : text.addAlarm;
+  els.labelFieldTitle.textContent = text.label;
+  els.enabledFieldLabel.textContent = text.enableAfterSave;
   els.timeFields.classList.remove("hidden");
   els.weekdayBlock.classList.remove("hidden");
   els.alarmToggleFields.classList.remove("hidden");
@@ -376,9 +448,7 @@ function openAlarmEditor({ alarmType, alarmId = null, routineGroupId = null }) {
   els.routineGroupField.classList.toggle("hidden", alarmType !== "routine");
   renderRoutineOptions(alarm?.routineGroupId || routineGroupId || state.selectedRoutineId);
   renderWeekdays(alarm?.repeatDays || []);
-  els.editorHint.textContent = alarmType === "routine"
-    ? "Effective state = routine group enabled AND child alarm enabled."
-    : "Standard alarms are controlled by their own switch only.";
+  els.editorHint.textContent = alarmType === "routine" ? text.routineEditorHint : text.standardEditorHint;
 }
 
 function openRoutineEditor(groupId = null) {
@@ -386,10 +456,10 @@ function openRoutineEditor(groupId = null) {
   editor.mode = "routine";
   editor.editingId = groupId;
   els.editorModal.classList.remove("hidden");
-  els.editorTag.textContent = "Routine Group";
-  els.editorTitle.textContent = routine ? "Edit routine group" : "New routine group";
-  els.labelFieldTitle.textContent = "Routine name";
-  els.enabledFieldLabel.textContent = "Enable group after save";
+  els.editorTag.textContent = text.routineGroupEditor;
+  els.editorTitle.textContent = routine ? text.editRoutineGroup : text.addRoutineGroup;
+  els.labelFieldTitle.textContent = text.routineName;
+  els.enabledFieldLabel.textContent = text.enableGroupAfterSave;
   els.timeFields.classList.add("hidden");
   els.weekdayBlock.classList.add("hidden");
   els.alarmToggleFields.classList.add("hidden");
@@ -398,7 +468,7 @@ function openRoutineEditor(groupId = null) {
   els.deleteButton.classList.toggle("hidden", !routine);
   els.labelInput.value = routine?.name || "";
   els.enabledInput.checked = routine?.enabled ?? true;
-  els.editorHint.textContent = "The group switch does not overwrite child alarm switches.";
+  els.editorHint.textContent = text.routineOverwriteHint;
 }
 
 function closeEditor() {
@@ -409,7 +479,7 @@ function saveEditor(event) {
   event.preventDefault();
   if (editor.mode === "routine") {
     const name = els.labelInput.value.trim();
-    if (!name) return toast("Routine name is required.");
+    if (!name) return toast(text.routineNameRequired);
     if (editor.editingId) {
       const target = group(editor.editingId);
       target.name = name;
@@ -421,7 +491,7 @@ function saveEditor(event) {
     }
     closeEditor();
     renderAll();
-    return toast("Routine group saved.");
+    return toast(text.routineSaved);
   }
 
   const payload = {
@@ -437,14 +507,14 @@ function saveEditor(event) {
     enabled: els.enabledInput.checked,
     routineGroupId: editor.alarmType === "routine" ? els.routineGroupSelect.value : null,
   };
-  if (payload.hour < 0 || payload.hour > 23 || payload.minute < 0 || payload.minute > 59) return toast("Invalid time.");
+  if (payload.hour < 0 || payload.hour > 23 || payload.minute < 0 || payload.minute > 59) return toast(text.invalidTime);
   const index = state.alarms.findIndex((item) => item.id === payload.id);
   if (index >= 0) state.alarms[index] = payload;
   else state.alarms.push(payload);
   if (payload.routineGroupId) state.selectedRoutineId = payload.routineGroupId;
   closeEditor();
   renderAll();
-  toast("Alarm saved.");
+  toast(text.alarmSaved);
 }
 
 function deleteCurrent() {
@@ -458,7 +528,7 @@ function deleteCurrent() {
   }
   closeEditor();
   renderAll();
-  toast("Deleted.");
+  toast(text.deleted);
 }
 
 function exportJson() {
@@ -466,7 +536,7 @@ function exportJson() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "custom-alarm-preview-state.json";
+  link.download = text.exportFileName;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -558,7 +628,7 @@ $("#closeSettingsButton").addEventListener("click", () => els.settingsModal.clas
 $("#resetDemoButton").addEventListener("click", () => {
   state = demoState();
   renderAll();
-  toast("Demo reset.");
+  toast(text.demoReset);
 });
 $("#exportStateButton").addEventListener("click", exportJson);
 els.editorForm.addEventListener("submit", saveEditor);
