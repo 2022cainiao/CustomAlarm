@@ -27,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -159,7 +160,9 @@ private fun AlarmApp() {
                 AlarmEditorScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onSaved = { navController.popBackStack() }
+                    onSaved = { savedRoutineGroupId ->
+                        navController.finishAlarmEditor(savedRoutineGroupId)
+                    }
                 )
             }
 
@@ -198,6 +201,19 @@ private fun AlarmApp() {
                     onSaved = { navController.popBackStack() }
                 )
             }
+        }
+    }
+}
+
+private fun NavHostController.finishAlarmEditor(savedRoutineGroupId: Long?) {
+    val targetRoute = savedRoutineGroupId?.let(NavRoutes::routineDetail) ?: NavRoutes.HOME
+    val returnedToTarget = popBackStack(targetRoute, inclusive = false)
+    if (!returnedToTarget) {
+        navigate(targetRoute) {
+            popUpTo(graph.startDestinationId) {
+                inclusive = false
+            }
+            launchSingleTop = true
         }
     }
 }

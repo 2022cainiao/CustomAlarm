@@ -44,7 +44,7 @@ import com.customalarm.app.data.model.AlarmType
 fun AlarmEditorScreen(
     viewModel: AlarmEditorViewModel,
     onBack: () -> Unit,
-    onSaved: () -> Unit
+    onSaved: (Long?) -> Unit
 ) {
     val state = viewModel.uiState
     val context = LocalContext.current
@@ -69,7 +69,7 @@ fun AlarmEditorScreen(
     }
 
     LaunchedEffect(state.saved) {
-        if (state.saved) onSaved()
+        if (state.saved) onSaved(state.routineGroupId)
     }
 
     if (state.isLoading) {

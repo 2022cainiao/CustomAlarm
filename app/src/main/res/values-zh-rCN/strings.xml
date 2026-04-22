@@ -23,6 +23,8 @@
     <string name="action_change_language">&#x5207;&#x6362;&#x8BED;&#x8A00;</string>
     <string name="action_sync_holiday_calendar">&#x5237;&#x65B0;</string>
     <string name="action_save_server_address">&#x4FDD;&#x5B58;&#x5730;&#x5740;</string>
+    <string name="action_show_holiday_tools">&#x914D;&#x7F6E;</string>
+    <string name="action_hide_holiday_tools">&#x6536;&#x8D77;</string>
     <string name="action_dismiss">&#x5173;&#x95ED;</string>
     <string name="action_save_alarm">&#x4FDD;&#x5B58;&#x95F9;&#x949F;</string>
     <string name="action_save_routine_group">&#x4FDD;&#x5B58;&#x4F5C;&#x606F;&#x7EC4;</string>

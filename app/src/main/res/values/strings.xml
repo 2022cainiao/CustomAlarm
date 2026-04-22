@@ -23,6 +23,8 @@
     <string name="action_change_language">Change language</string>
     <string name="action_sync_holiday_calendar">Refresh</string>
     <string name="action_save_server_address">Save address</string>
+    <string name="action_show_holiday_tools">Manage</string>
+    <string name="action_hide_holiday_tools">Hide</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_save_alarm">Save alarm</string>
     <string name="action_save_routine_group">Save routine group</string>

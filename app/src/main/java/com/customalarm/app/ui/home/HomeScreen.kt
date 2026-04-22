@@ -85,6 +85,7 @@ fun HomeScreen(
     var moveAlarmId by remember { mutableStateOf<Long?>(null) }
     var languageMenuExpanded by remember { mutableStateOf(false) }
     var holidayServerInput by rememberSaveable { mutableStateOf(uiState.holidayServerUrl) }
+    var holidaySettingsExpanded by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(uiState.holidayServerUrl) {
         if (holidayServerInput != uiState.holidayServerUrl) {
@@ -187,7 +188,9 @@ fun HomeScreen(
             item {
                 HolidayCalendarCard(
                     holidayCalendar = uiState.holidayCalendar,
+                    expanded = holidaySettingsExpanded,
                     serverUrl = holidayServerInput,
+                    onExpandChange = { holidaySettingsExpanded = it },
                     onServerUrlChange = { holidayServerInput = it },
                     onSaveServerUrl = { viewModel.saveHolidayServerUrl(holidayServerInput) },
                     onSyncHolidayCalendar = { onSyncHolidayCalendar(holidayServerInput) }
@@ -284,7 +287,9 @@ private fun LanguageMenuButton(
 @Composable
 private fun HolidayCalendarCard(
     holidayCalendar: HolidayCalendarUiState,
+    expanded: Boolean,
     serverUrl: String,
+    onExpandChange: (Boolean) -> Unit,
     onServerUrlChange: (String) -> Unit,
     onSaveServerUrl: () -> Unit,
     onSyncHolidayCalendar: () -> Unit
@@ -295,15 +300,15 @@ private fun HolidayCalendarCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (warningActive) {
-                MaterialTheme.colorScheme.errorContainer
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.78f)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.surface
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(
@@ -313,8 +318,8 @@ private fun HolidayCalendarCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.label_holiday_calendar),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = stringResource(
@@ -325,33 +330,13 @@ private fun HolidayCalendarCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-            OutlinedTextField(
-                value = serverUrl,
-                onValueChange = onServerUrlChange,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringResource(R.string.label_holiday_server_address)) },
-                placeholder = { Text(stringResource(R.string.hint_holiday_server_address)) }
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                OutlinedButton(onClick = onSaveServerUrl) {
-                    Text(stringResource(R.string.action_save_server_address))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(
-                    onClick = onSyncHolidayCalendar,
-                    enabled = serverConfigured && !holidayCalendar.isSyncing
-                ) {
+                TextButton(onClick = { onExpandChange(!expanded) }) {
                     Text(
                         stringResource(
-                            if (holidayCalendar.isSyncing) {
-                                R.string.status_syncing
+                            if (expanded) {
+                                R.string.action_hide_holiday_tools
                             } else {
-                                R.string.action_sync_holiday_calendar
+                                R.string.action_show_holiday_tools
                             }
                         )
                     )
@@ -371,14 +356,47 @@ private fun HolidayCalendarCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = stringResource(
-                    R.string.label_holiday_last_sync,
-                    formatInstantOrDash(holidayCalendar.syncedAt)
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (expanded) {
+                OutlinedTextField(
+                    value = serverUrl,
+                    onValueChange = onServerUrlChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.label_holiday_server_address)) },
+                    placeholder = { Text(stringResource(R.string.hint_holiday_server_address)) }
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(onClick = onSaveServerUrl) {
+                        Text(stringResource(R.string.action_save_server_address))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = onSyncHolidayCalendar,
+                        enabled = serverConfigured && !holidayCalendar.isSyncing
+                    ) {
+                        Text(
+                            stringResource(
+                                if (holidayCalendar.isSyncing) {
+                                    R.string.status_syncing
+                                } else {
+                                    R.string.action_sync_holiday_calendar
+                                }
+                            )
+                        )
+                    }
+                }
+                Text(
+                    text = stringResource(
+                        R.string.label_holiday_last_sync,
+                        formatInstantOrDash(holidayCalendar.syncedAt)
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (holidayCalendar.shouldWarnSourceUnavailable) {
                 Text(
                     text = stringResource(R.string.warning_holiday_calendar_expired),
