@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.net.HttpURLConnection
@@ -43,6 +45,7 @@ class HolidayCalendarSyncRepository(
 ) {
     private val _status = MutableStateFlow(buildStatus())
     val status: StateFlow<HolidayCalendarSyncStatus> = _status.asStateFlow()
+    private val syncMutex = Mutex()
 
     @Volatile
     private var autoSyncAttempted = false
@@ -67,47 +70,60 @@ class HolidayCalendarSyncRepository(
     }
 
     suspend fun syncNow(): HolidayCalendarSyncResult {
-        _status.value = buildStatus(isSyncing = true)
-        val fetchResult = fetchRemoteCalendar()
-        return when (fetchResult) {
-            is RemoteFetchResult.Success -> {
-                val normalizedCalendar = fetchResult.calendar.copy(
-                    sourceName = fetchResult.calendar.sourceName ?: fetchResult.source.name,
-                    sourceUrl = fetchResult.source.url,
-                    syncedAt = nowProvider()
-                )
-                val updated = holidayCalendarStore.update(normalizedCalendar)
-                if (updated) {
-                    lastSyncErrorMessage = null
-                    lastSyncFailed = false
-                    _status.value = buildStatus()
-                    HolidayCalendarSyncResult(
-                        succeeded = true,
-                        calendarChanged = true
-                    )
-                } else {
-                    val message = "Unable to cache synced holiday data."
-                    lastSyncErrorMessage = message
-                    lastSyncFailed = true
-                    _status.value = buildStatus()
-                    HolidayCalendarSyncResult(
-                        succeeded = false,
-                        calendarChanged = false,
-                        errorMessage = message
-                    )
-                }
-            }
+        return syncMutex.withLock {
+            _status.value = buildStatus(isSyncing = true)
+            val result = runCatching {
+                when (val fetchResult = fetchRemoteCalendar()) {
+                    is RemoteFetchResult.Success -> {
+                        val normalizedCalendar = fetchResult.calendar.copy(
+                            sourceName = fetchResult.calendar.sourceName ?: fetchResult.source.name,
+                            sourceUrl = fetchResult.source.url,
+                            syncedAt = nowProvider()
+                        )
+                        val updated = withContext(ioDispatcher) {
+                            holidayCalendarStore.update(normalizedCalendar)
+                        }
+                        if (updated) {
+                            lastSyncErrorMessage = null
+                            lastSyncFailed = false
+                            HolidayCalendarSyncResult(
+                                succeeded = true,
+                                calendarChanged = true
+                            )
+                        } else {
+                            val message = "Unable to cache synced holiday data."
+                            lastSyncErrorMessage = message
+                            lastSyncFailed = true
+                            HolidayCalendarSyncResult(
+                                succeeded = false,
+                                calendarChanged = false,
+                                errorMessage = message
+                            )
+                        }
+                    }
 
-            is RemoteFetchResult.Failure -> {
-                lastSyncErrorMessage = fetchResult.message
+                    is RemoteFetchResult.Failure -> {
+                        lastSyncErrorMessage = fetchResult.message
+                        lastSyncFailed = true
+                        HolidayCalendarSyncResult(
+                            succeeded = false,
+                            calendarChanged = false,
+                            errorMessage = fetchResult.message
+                        )
+                    }
+                }
+            }.getOrElse { throwable ->
+                val message = throwable.message.orEmpty().ifBlank { "Holiday calendar sync failed." }
+                lastSyncErrorMessage = message
                 lastSyncFailed = true
-                _status.value = buildStatus()
                 HolidayCalendarSyncResult(
                     succeeded = false,
                     calendarChanged = false,
-                    errorMessage = fetchResult.message
+                    errorMessage = message
                 )
             }
+            _status.value = buildStatus()
+            result
         }
     }
 
@@ -135,7 +151,8 @@ class HolidayCalendarSyncRepository(
     }
 
     private fun buildStatus(isSyncing: Boolean = false): HolidayCalendarSyncStatus {
-        val calendar = holidayCalendarStore.currentCalendar()
+        val calendar = runCatching { holidayCalendarStore.currentCalendar() }
+            .getOrElse { HolidayCalendar.empty() }
         val expired = calendar.isExpired(todayProvider())
         val warning = if (expired && lastSyncFailed) {
             true

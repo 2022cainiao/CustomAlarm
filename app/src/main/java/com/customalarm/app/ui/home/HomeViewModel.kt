@@ -75,9 +75,11 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            val result = holidayCalendarSyncRepository.syncIfNeeded()
-            if (result.succeeded && result.calendarChanged) {
-                coordinator.rebuildSchedules()
+            runCatching {
+                val result = holidayCalendarSyncRepository.syncIfNeeded()
+                if (result.succeeded && result.calendarChanged) {
+                    coordinator.rebuildSchedules()
+                }
             }
         }
     }
@@ -108,9 +110,11 @@ class HomeViewModel(
 
     fun syncHolidayCalendar() {
         viewModelScope.launch {
-            val result = holidayCalendarSyncRepository.syncNow()
-            if (result.succeeded && result.calendarChanged) {
-                coordinator.rebuildSchedules()
+            runCatching {
+                val result = holidayCalendarSyncRepository.syncNow()
+                if (result.succeeded && result.calendarChanged) {
+                    coordinator.rebuildSchedules()
+                }
             }
         }
     }
