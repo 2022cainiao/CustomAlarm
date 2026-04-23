@@ -1,16 +1,11 @@
 package com.customalarm.app
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -62,11 +57,6 @@ private fun AlarmApp() {
     val lifecycleOwner = LocalLifecycleOwner.current
     val container = context.appContainer
     var permissionRefreshTick by remember { mutableStateOf(0) }
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) {
-        permissionRefreshTick++
-    }
     val exactAlarmEnabled = remember(permissionRefreshTick) {
         container.alarmScheduler.canScheduleExactAlarms()
     }
@@ -76,6 +66,7 @@ private fun AlarmApp() {
     val batteryOptimizationIgnored = remember(permissionRefreshTick) {
         batteryOptimizationIgnored(context)
     }
+    val deviceManufacturer = remember { deviceManufacturerLabel() }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -106,29 +97,7 @@ private fun AlarmApp() {
                     exactAlarmEnabled = exactAlarmEnabled,
                     notificationsEnabled = notificationsEnabled,
                     batteryOptimizationIgnored = batteryOptimizationIgnored,
-                    onRequestExactAlarmPermission = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            context.startActivity(
-                                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                                    data = Uri.parse("package:${context.packageName}")
-                                }
-                            )
-                        }
-                    },
-                    onRequestNotificationPermission = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    },
-                    onRequestIgnoreBatteryOptimizations = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            context.startActivity(
-                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                    data = Uri.parse("package:${context.packageName}")
-                                }
-                            )
-                        }
-                    },
+                    deviceManufacturer = deviceManufacturer,
                     onSyncHolidayCalendar = { serverUrl -> viewModel.syncHolidayCalendar(serverUrl) },
                     onAddNormalAlarm = { navController.navigate(NavRoutes.alarmEditor()) },
                     onAddRoutineGroup = { navController.navigate(NavRoutes.routineEditor()) },
@@ -235,5 +204,14 @@ private fun batteryOptimizationIgnored(context: android.content.Context): Boolea
         powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
     } else {
         true
+    }
+}
+
+private fun deviceManufacturerLabel(): String {
+    val label = android.os.Build.BRAND.takeUnless { it.isNullOrBlank() }
+        ?: android.os.Build.MANUFACTURER.takeUnless { it.isNullOrBlank() }
+        ?: "Android"
+    return label.replaceFirstChar { char ->
+        if (char.isLowerCase()) char.titlecase() else char.toString()
     }
 }

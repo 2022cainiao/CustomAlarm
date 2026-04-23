@@ -72,9 +72,7 @@ fun HomeScreen(
     exactAlarmEnabled: Boolean,
     notificationsEnabled: Boolean,
     batteryOptimizationIgnored: Boolean,
-    onRequestExactAlarmPermission: () -> Unit,
-    onRequestNotificationPermission: () -> Unit,
-    onRequestIgnoreBatteryOptimizations: () -> Unit,
+    deviceManufacturer: String,
     onSyncHolidayCalendar: (String) -> Unit,
     onAddNormalAlarm: () -> Unit,
     onAddRoutineGroup: () -> Unit,
@@ -179,9 +177,7 @@ fun HomeScreen(
                     exactAlarmEnabled = exactAlarmEnabled,
                     notificationsEnabled = notificationsEnabled,
                     batteryOptimizationIgnored = batteryOptimizationIgnored,
-                    onRequestExactAlarmPermission = onRequestExactAlarmPermission,
-                    onRequestNotificationPermission = onRequestNotificationPermission,
-                    onRequestIgnoreBatteryOptimizations = onRequestIgnoreBatteryOptimizations
+                    deviceManufacturer = deviceManufacturer
                 )
             }
 
@@ -513,9 +509,7 @@ private fun PermissionCard(
     exactAlarmEnabled: Boolean,
     notificationsEnabled: Boolean,
     batteryOptimizationIgnored: Boolean,
-    onRequestExactAlarmPermission: () -> Unit,
-    onRequestNotificationPermission: () -> Unit,
-    onRequestIgnoreBatteryOptimizations: () -> Unit
+    deviceManufacturer: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -529,6 +523,11 @@ private fun PermissionCard(
                 stringResource(R.string.label_permissions),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                stringResource(R.string.label_device_manufacturer, deviceManufacturer),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 stringResource(
@@ -548,6 +547,15 @@ private fun PermissionCard(
                     stringResource(if (batteryOptimizationIgnored) R.string.label_disabled else R.string.label_enabled)
                 )
             )
+            Text(
+                stringResource(R.string.label_auto_start_status),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = permissionGuideText(deviceManufacturer),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             if (!batteryOptimizationIgnored) {
                 Text(
                     stringResource(R.string.hint_battery_optimization),
@@ -555,34 +563,27 @@ private fun PermissionCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!exactAlarmEnabled) {
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onRequestExactAlarmPermission
-                    ) {
-                        Text(stringResource(R.string.action_enable_exact_alarms))
-                    }
-                }
-                if (!notificationsEnabled) {
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onRequestNotificationPermission
-                    ) {
-                        Text(stringResource(R.string.action_enable_notifications))
-                    }
-                }
-                if (!batteryOptimizationIgnored) {
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onRequestIgnoreBatteryOptimizations
-                    ) {
-                        Text(stringResource(R.string.action_disable_battery_optimization))
-                    }
-                }
-            }
         }
     }
+}
+
+@Composable
+private fun permissionGuideText(deviceManufacturer: String): String {
+    val normalized = deviceManufacturer.lowercase()
+    val guideRes = when {
+        normalized.contains("oppo") || normalized.contains("oneplus") || normalized.contains("realme") ->
+            R.string.hint_permission_guide_oppo
+        normalized.contains("xiaomi") || normalized.contains("redmi") || normalized.contains("poco") ->
+            R.string.hint_permission_guide_xiaomi
+        normalized.contains("vivo") || normalized.contains("iqoo") ->
+            R.string.hint_permission_guide_vivo
+        normalized.contains("huawei") || normalized.contains("honor") ->
+            R.string.hint_permission_guide_huawei
+        normalized.contains("samsung") ->
+            R.string.hint_permission_guide_samsung
+        else -> R.string.hint_permission_guide_generic
+    }
+    return stringResource(guideRes)
 }
 
 @Composable
