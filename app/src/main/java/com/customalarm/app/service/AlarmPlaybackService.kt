@@ -3,6 +3,7 @@ package com.customalarm.app.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -12,6 +13,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -30,23 +32,32 @@ class AlarmPlaybackService : Service() {
     private var vibrator: Vibrator? = null
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
+    private val ringingStateStore: SharedPreferences by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_START -> handleStart(intent)
-            ACTION_DISMISS -> stopAlarm()
-            ACTION_SNOOZE -> {
-                val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1L)
-                val snoozeMinutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, currentSnoozeMinutes)
-                if (alarmId > 0L && canSnooze) {
-                    appContainer.applicationScope.launch {
-                        appContainer.alarmCoordinator.snoozeAlarm(alarmId, snoozeMinutes)
+        try {
+            when (intent?.action) {
+                ACTION_START -> handleStart(intent)
+                ACTION_DISMISS -> stopAlarm()
+                ACTION_SNOOZE -> {
+                    val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1L)
+                    val snoozeMinutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, currentSnoozeMinutes)
+                    if (alarmId > 0L && canSnooze) {
+                        appContainer.applicationScope.launch {
+                            appContainer.alarmCoordinator.snoozeAlarm(alarmId, snoozeMinutes)
+                        }
                     }
+                    stopAlarm()
                 }
-                stopAlarm()
+                else -> restorePersistedAlarmIfNeeded()
             }
+        } catch (exception: Exception) {
+            Log.e(TAG, "Alarm playback command failed", exception)
+            stopAlarm()
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun handleStart(intent: Intent) {
@@ -59,6 +70,14 @@ class AlarmPlaybackService : Service() {
             val label = intent.getStringExtra(EXTRA_LABEL).orEmpty()
             val ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI)
             val vibrate = intent.getBooleanExtra(EXTRA_VIBRATE, true)
+            persistRingingState(
+                alarmId = alarmId,
+                label = label,
+                ringtoneUri = ringtoneUri,
+                vibrate = vibrate,
+                snoozeEnabled = canSnooze,
+                snoozeMinutes = currentSnoozeMinutes
+            )
 
             startForeground(
                 AlarmRingingController.NOTIFICATION_ID_BASE + alarmId.toInt(),
@@ -115,6 +134,7 @@ class AlarmPlaybackService : Service() {
         return runCatching {
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(alarmAudioAttributes())
+                setWakeMode(this@AlarmPlaybackService, PowerManager.PARTIAL_WAKE_LOCK)
                 setDataSource(this@AlarmPlaybackService, uri)
                 isLooping = true
                 prepare()
@@ -182,10 +202,16 @@ class AlarmPlaybackService : Service() {
     }
 
     private fun stopAlarm() {
+        clearPersistedRingingState()
         stopPlayback()
         sendBroadcast(Intent(AlarmRingingController.ACTION_FINISH_RINGING).setPackage(packageName))
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.w(TAG, "Task removed while alarm service is active, keeping foreground playback alive")
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun stopPlayback() {
@@ -208,6 +234,7 @@ class AlarmPlaybackService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private const val PREFS_NAME = "alarm_playback_service"
         private const val ACTION_START = "com.customalarm.app.action.START_ALARM"
         private const val ACTION_DISMISS = "com.customalarm.app.action.DISMISS_ALARM"
         private const val ACTION_SNOOZE = "com.customalarm.app.action.SNOOZE_ALARM"
@@ -218,6 +245,12 @@ class AlarmPlaybackService : Service() {
         private const val EXTRA_SNOOZE_ENABLED = "extra_snooze_enabled"
         private const val EXTRA_SNOOZE_MINUTES = "extra_snooze_minutes"
         private const val TAG = "AlarmPlaybackService"
+        private const val KEY_ALARM_ID = "alarm_id"
+        private const val KEY_LABEL = "label"
+        private const val KEY_RINGTONE_URI = "ringtone_uri"
+        private const val KEY_VIBRATE = "vibrate"
+        private const val KEY_SNOOZE_ENABLED = "snooze_enabled"
+        private const val KEY_SNOOZE_MINUTES = "snooze_minutes"
 
         fun createStartIntent(
             context: Context,
@@ -249,5 +282,46 @@ class AlarmPlaybackService : Service() {
                 putExtra(EXTRA_ALARM_ID, alarmId)
                 putExtra(EXTRA_SNOOZE_MINUTES, snoozeMinutes)
             }
+    }
+
+    private fun restorePersistedAlarmIfNeeded() {
+        val alarmId = ringingStateStore.getLong(KEY_ALARM_ID, -1L)
+        if (alarmId <= 0L) {
+            stopSelf()
+            return
+        }
+        handleStart(
+            createStartIntent(
+                context = this,
+                alarmId = alarmId,
+                label = ringingStateStore.getString(KEY_LABEL, "").orEmpty(),
+                ringtoneUri = ringingStateStore.getString(KEY_RINGTONE_URI, null),
+                vibrate = ringingStateStore.getBoolean(KEY_VIBRATE, true),
+                snoozeEnabled = ringingStateStore.getBoolean(KEY_SNOOZE_ENABLED, true),
+                snoozeMinutes = ringingStateStore.getInt(KEY_SNOOZE_MINUTES, 10)
+            )
+        )
+    }
+
+    private fun persistRingingState(
+        alarmId: Long,
+        label: String,
+        ringtoneUri: String?,
+        vibrate: Boolean,
+        snoozeEnabled: Boolean,
+        snoozeMinutes: Int
+    ) {
+        ringingStateStore.edit()
+            .putLong(KEY_ALARM_ID, alarmId)
+            .putString(KEY_LABEL, label)
+            .putString(KEY_RINGTONE_URI, ringtoneUri)
+            .putBoolean(KEY_VIBRATE, vibrate)
+            .putBoolean(KEY_SNOOZE_ENABLED, snoozeEnabled)
+            .putInt(KEY_SNOOZE_MINUTES, snoozeMinutes)
+            .apply()
+    }
+
+    private fun clearPersistedRingingState() {
+        ringingStateStore.edit().clear().apply()
     }
 }

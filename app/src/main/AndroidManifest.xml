@@ -56,6 +56,8 @@
         <service
             android:name=".service.AlarmPlaybackService"
             android:exported="false"
+            android:process=":alarmplayback"
+            android:stopWithTask="false"
             android:foregroundServiceType="mediaPlayback" />
     </application>
 
