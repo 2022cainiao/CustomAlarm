@@ -163,7 +163,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
+            item(key = "overview") {
                 OverviewCard(
                     totalAlarmCount = uiState.totalAlarmCount,
                     enabledNormalCount = uiState.enabledNormalCount,
@@ -174,7 +174,7 @@ fun HomeScreen(
                 )
             }
 
-            item {
+            item(key = "permissions") {
                 PermissionCard(
                     exactAlarmEnabled = exactAlarmEnabled,
                     notificationsEnabled = notificationsEnabled,
@@ -185,7 +185,7 @@ fun HomeScreen(
                 )
             }
 
-            item {
+            item(key = "holiday_calendar") {
                 HolidayCalendarCard(
                     holidayCalendar = uiState.holidayCalendar,
                     expanded = holidaySettingsExpanded,
@@ -197,12 +197,12 @@ fun HomeScreen(
                 )
             }
 
-            item { SectionHeader(title = stringResource(R.string.label_coming_up)) }
+            item(key = "upcoming_header") { SectionHeader(title = stringResource(R.string.label_coming_up)) }
 
             if (uiState.upcomingAlarms.isEmpty()) {
-                item { EmptyState(stringResource(R.string.empty_active_alarms)) }
+                item(key = "upcoming_empty") { EmptyState(stringResource(R.string.empty_active_alarms)) }
             } else {
-                items(uiState.upcomingAlarms, key = { it.alarmId }) { alarm ->
+                items(uiState.upcomingAlarms, key = { "upcoming_${it.alarmId}" }) { alarm ->
                     UpcomingAlarmCard(
                         alarm = alarm,
                         onOpen = { onEditAlarm(alarm.alarmId, alarm.routineGroupId) }
@@ -210,12 +210,12 @@ fun HomeScreen(
                 }
             }
 
-            item { SectionHeader(title = stringResource(R.string.label_standard_alarms)) }
+            item(key = "normal_header") { SectionHeader(title = stringResource(R.string.label_standard_alarms)) }
 
             if (uiState.normalAlarms.isEmpty()) {
-                item { EmptyState(stringResource(R.string.empty_standard_alarms)) }
+                item(key = "normal_empty") { EmptyState(stringResource(R.string.empty_standard_alarms)) }
             } else {
-                items(uiState.normalAlarms, key = { it.id }) { alarm ->
+                items(uiState.normalAlarms, key = { "normal_${it.id}" }) { alarm ->
                     AlarmCard(
                         alarm = alarm,
                         onToggle = { viewModel.toggleAlarm(alarm.id, it) },
@@ -226,12 +226,12 @@ fun HomeScreen(
                 }
             }
 
-            item { SectionHeader(title = stringResource(R.string.label_routine_groups)) }
+            item(key = "routine_groups_header") { SectionHeader(title = stringResource(R.string.label_routine_groups)) }
 
             if (uiState.routineGroups.isEmpty()) {
-                item { EmptyState(stringResource(R.string.empty_routine_groups)) }
+                item(key = "routine_groups_empty") { EmptyState(stringResource(R.string.empty_routine_groups)) }
             } else {
-                items(uiState.routineGroups, key = { it.id }) { group ->
+                items(uiState.routineGroups, key = { "routine_group_${it.id}" }) { group ->
                     RoutineGroupCard(
                         group = group,
                         onOpen = { onOpenRoutineGroup(group.id) },

@@ -113,7 +113,7 @@ fun RoutineDetailScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
+            item(key = "routine_group_summary") {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -168,13 +168,13 @@ fun RoutineDetailScreen(
             }
 
             if (state.alarms.isEmpty()) {
-                item {
+                item(key = "routine_group_alarms_empty") {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.empty_routine_group_alarms), modifier = Modifier.padding(16.dp))
                     }
                 }
             } else {
-                items(state.alarms, key = { it.id }) { alarm ->
+                items(state.alarms, key = { "routine_alarm_${it.id}" }) { alarm ->
                     RoutineAlarmCard(
                         alarm = alarm,
                         onToggle = { viewModel.toggleAlarm(alarm.id, it) },
