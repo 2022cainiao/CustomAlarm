@@ -2,6 +2,8 @@ package com.customalarm.app.ui.routine
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmEntity
@@ -36,7 +40,7 @@ import com.customalarm.app.util.formatAlarmTime
 import com.customalarm.app.util.formatNextTrigger
 import com.customalarm.app.util.formatRepeatDays
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoutineDetailScreen(
     viewModel: RoutineDetailViewModel,
@@ -78,14 +82,24 @@ fun RoutineDetailScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text(state.groupName) },
-            navigationIcon = { OutlinedButton(onClick = onBack) { Text(stringResource(R.string.action_back)) } }
-        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = state.groupName,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = { OutlinedButton(onClick = onBack) { Text(stringResource(R.string.action_back)) } }
+            )
+        }
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .padding(contentPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -107,16 +121,30 @@ fun RoutineDetailScreen(
                                     .filter { it.enabled && state.enabled }
                                     .mapNotNull { it.nextTriggerAt }
                                     .minOrNull()
-                                Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, nextTrigger)))
+                                Text(
+                                    text = stringResource(
+                                        R.string.label_next_ring,
+                                        formatNextTrigger(context, nextTrigger)
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                             Switch(checked = state.enabled, onCheckedChange = viewModel::toggleGroup)
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onEditGroup) { Text(stringResource(R.string.action_edit_group)) }
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(onClick = onEditGroup) {
+                                Text(stringResource(R.string.action_edit_group))
+                            }
                             OutlinedButton(onClick = { viewModel.deleteGroup(onDeleted) }) {
                                 Text(stringResource(R.string.action_delete_group))
                             }
-                            Button(onClick = onAddAlarm) { Text(stringResource(R.string.action_add_group_alarm)) }
+                            Button(onClick = onAddAlarm) {
+                                Text(stringResource(R.string.action_add_group_alarm))
+                            }
                         }
                     }
                 }
@@ -143,6 +171,7 @@ fun RoutineDetailScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RoutineAlarmCard(
     alarm: AlarmEntity,
@@ -161,16 +190,30 @@ private fun RoutineAlarmCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = formatAlarmTime(alarm.hour, alarm.minute),
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) })
+                    Text(
+                        text = alarm.label.ifBlank { stringResource(R.string.empty_unnamed_alarm) },
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
                 Switch(checked = alarm.enabled, onCheckedChange = onToggle)
             }
-            Text(formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays))
-            Text(stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = formatRepeatDays(context, alarm.repeatDays, alarm.holidayAwareWorkdays),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(R.string.label_next_ring, formatNextTrigger(context, alarm.nextTriggerAt)),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
                 OutlinedButton(onClick = onMove) { Text(stringResource(R.string.action_move)) }
                 OutlinedButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) }
