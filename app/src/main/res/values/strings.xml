@@ -21,7 +21,6 @@
     <string name="action_enable_notifications">Enable notifications</string>
     <string name="action_disable_battery_optimization">Allow background alarms</string>
     <string name="action_change_language">Change language</string>
-    <string name="action_sync_to_system_alarm">Sync to system alarm</string>
     <string name="action_sync_holiday_calendar">Refresh</string>
     <string name="action_save_server_address">Save address</string>
     <string name="action_show_holiday_tools">Manage</string>
@@ -85,7 +84,6 @@
     <string name="label_routine_group_name">Routine name</string>
     <string name="label_move_alarm">Move alarm</string>
     <string name="label_move_alarm_message">Choose where this alarm should live next.</string>
-    <string name="label_system_alarm_bridge">System alarm compatibility</string>
     <string name="option_language_system">System default</string>
     <string name="option_language_zh_cn">Simplified Chinese</string>
     <string name="option_language_en">English</string>
@@ -109,15 +107,12 @@
     <string name="hint_holiday_aware_workdays">When enabled, this alarm follows the official workday calendar instead of a plain Monday-to-Friday loop.</string>
     <string name="hint_holiday_server_address">Example: 159.75.186.179:8090/holiday.json</string>
     <string name="hint_battery_optimization">If your phone clears this app from recent tasks, system battery restrictions may stop alarms from ringing in the background.</string>
-    <string name="hint_system_alarm_bridge">If your phone vendor limits background alarms, you can hand critical alarms off to the system Clock app. System-side support usually guarantees only time, repeat days, label, and vibration.</string>
 
     <string name="status_saving">Saving...</string>
     <string name="status_syncing">Syncing...</string>
     <string name="status_alarm_ringing">Alarm ringing</string>
     <string name="status_open">Open</string>
     <string name="status_cancel">Cancel</string>
-    <string name="status_system_alarm_opened">Opened the system alarm creation screen.</string>
-    <string name="status_system_alarm_weekday_fallback">The system alarm app does not support official workday rules, so this import uses Monday through Friday.</string>
 
     <string name="error_invalid_time">Enter a valid time.</string>
     <string name="error_choose_routine_group">Choose a routine group first.</string>
@@ -125,7 +120,6 @@
     <string name="error_enter_routine_name">Enter a routine group name.</string>
     <string name="error_save_alarm_failed">Could not save this alarm right now. Please try again.</string>
     <string name="error_save_routine_group_failed">Could not save this routine group right now. Please try again.</string>
-    <string name="error_system_alarm_not_supported">This device does not expose a compatible system alarm creation entry.</string>
     <string name="warning_holiday_calendar_expired">Local holiday data has expired and the holiday server is currently unavailable. Official workday alarms may be inaccurate until sync succeeds.</string>
 
     <string name="alarm_channel_name">Alarm alerts</string>

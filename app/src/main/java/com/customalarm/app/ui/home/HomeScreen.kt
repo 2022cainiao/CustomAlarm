@@ -1,6 +1,5 @@
 package com.customalarm.app.ui.home
 
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -64,8 +63,6 @@ import com.customalarm.app.util.formatInstantOrDash
 import com.customalarm.app.util.formatLocalDate
 import com.customalarm.app.util.formatNextTrigger
 import com.customalarm.app.util.formatRepeatDays
-import com.customalarm.app.util.launchSystemAlarm
-import com.customalarm.app.util.toSystemAlarmDraft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -749,38 +746,24 @@ private fun AlarmCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Column(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onEdit
+                ) { Text(stringResource(R.string.action_edit)) }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onMove
+                ) { Text(stringResource(R.string.action_move)) }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onDelete
                 ) {
-                    OutlinedButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = onEdit
-                    ) { Text(stringResource(R.string.action_edit)) }
-                    OutlinedButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = onMove
-                    ) { Text(stringResource(R.string.action_move)) }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = { openSystemAlarm(context, alarm) }
-                    ) { Text(stringResource(R.string.action_sync_to_system_alarm)) }
-                    OutlinedButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = onDelete
-                    ) {
-                        Icon(Icons.Filled.Delete, contentDescription = null)
-                        Text(stringResource(R.string.action_delete))
-                    }
+                    Icon(Icons.Filled.Delete, contentDescription = null)
+                    Text(stringResource(R.string.action_delete))
                 }
             }
         }
@@ -927,13 +910,4 @@ private fun languageLabel(language: AppLanguage): String {
         AppLanguage.ZH_CN -> stringResource(R.string.option_language_zh_cn)
         AppLanguage.EN -> stringResource(R.string.option_language_en)
     }
-}
-private fun openSystemAlarm(context: android.content.Context, alarm: AlarmEntity) {
-    val messageRes = when (launchSystemAlarm(context, alarm.toSystemAlarmDraft())) {
-        com.customalarm.app.util.SystemAlarmLaunchResult.Launched -> R.string.status_system_alarm_opened
-        com.customalarm.app.util.SystemAlarmLaunchResult.LaunchedWithHolidayFallback -> R.string.status_system_alarm_weekday_fallback
-        com.customalarm.app.util.SystemAlarmLaunchResult.InvalidTime -> R.string.error_invalid_time
-        com.customalarm.app.util.SystemAlarmLaunchResult.NotSupported -> R.string.error_system_alarm_not_supported
-    }
-    Toast.makeText(context, context.getString(messageRes), Toast.LENGTH_SHORT).show()
 }

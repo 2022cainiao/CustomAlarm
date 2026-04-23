@@ -3,7 +3,6 @@ package com.customalarm.app.ui.alarm
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.customalarm.app.R
 import com.customalarm.app.data.model.AlarmType
-import com.customalarm.app.util.SystemAlarmDraft
-import com.customalarm.app.util.SystemAlarmLaunchResult
-import com.customalarm.app.util.launchSystemAlarm
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -314,28 +310,6 @@ fun AlarmEditorScreen(
                             Text(stringResource(R.string.action_use_default))
                         }
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.label_system_alarm_bridge),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = stringResource(R.string.hint_system_alarm_bridge),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    OutlinedButton(
-                        onClick = {
-                            syncToSystemAlarm(
-                                context = context,
-                                draft = state.toSystemAlarmDraft()
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.action_sync_to_system_alarm))
-                    }
                 }
             }
 
@@ -392,28 +366,4 @@ private fun extractPickedRingtoneUri(data: Intent?): Uri? {
         @Suppress("DEPRECATION")
         data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
     }
-}
-
-private fun AlarmEditorUiState.toSystemAlarmDraft(): SystemAlarmDraft {
-    return SystemAlarmDraft(
-        hour = hour.toIntOrNull() ?: -1,
-        minute = minute.toIntOrNull() ?: -1,
-        label = label,
-        repeatDays = repeatDays.sorted(),
-        holidayAwareWorkdays = holidayAwareWorkdays,
-        vibrate = vibrate
-    )
-}
-
-private fun syncToSystemAlarm(
-    context: android.content.Context,
-    draft: SystemAlarmDraft
-) {
-    val messageRes = when (launchSystemAlarm(context, draft)) {
-        SystemAlarmLaunchResult.Launched -> R.string.status_system_alarm_opened
-        SystemAlarmLaunchResult.LaunchedWithHolidayFallback -> R.string.status_system_alarm_weekday_fallback
-        SystemAlarmLaunchResult.InvalidTime -> R.string.error_invalid_time
-        SystemAlarmLaunchResult.NotSupported -> R.string.error_system_alarm_not_supported
-    }
-    Toast.makeText(context, context.getString(messageRes), Toast.LENGTH_SHORT).show()
 }
